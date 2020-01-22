@@ -11,18 +11,12 @@ import immogram.webdriver.Session;
 
 class JsonReaders {
 
-	static RuntimeException forError(InputStream in) {
+	static String forErrorMessage(InputStream in) {
 		var reader = Json.createReader(in);
 
-		var value = reader.readObject()
-				.getJsonObject("value");
-
-		return toRuntimeException(value);
-	}
-
-	private static RuntimeException toRuntimeException(JsonObject object) {
-		var value = object.getString("message");
-		return new RuntimeException(value);
+		return reader.readObject()
+				.getJsonObject("value")
+				.getString("message");
 	}
 
 	static Session.Id forSessionId(InputStream in) {

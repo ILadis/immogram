@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 import javax.json.JsonStructure;
 
+import immogram.Exceptions;
 import immogram.webdriver.By;
 import immogram.webdriver.Element;
 import immogram.webdriver.Session;
@@ -181,14 +182,14 @@ public class HttpWebDriver implements WebDriver {
 		try {
 			response = client.send(request.build(), BodyHandlers.ofInputStream());
 		} catch (IOException | InterruptedException e) {
-			throw new RuntimeException(e);
+			return Exceptions.throwUnchecked(e);
 		}
 
 		if (response.statusCode() < 400) {
 			return reader.apply(response.body());
 		}
 
-		var exception = JsonReaders.forError(response.body());
-		throw exception;
+		var message = JsonReaders.forErrorMessage(response.body());
+		return Exceptions.throwUnchecked(new Exception(message));
 	}
 }

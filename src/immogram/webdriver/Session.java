@@ -1,5 +1,7 @@
 package immogram.webdriver;
 
+import static immogram.Exceptions.throwUnchecked;
+
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -47,12 +49,12 @@ public class Session {
 
 	public Element waitForElement(By selector, Duration timeout) {
 		var sleep = Duration.ofSeconds(1);
-		var exception = new RuntimeException();
+		var exception = new Exception();
 
 		while (!timeout.isNegative()) {
 			try {
 				return findElement(selector);
-			} catch (RuntimeException e) {
+			} catch (Exception e) {
 				exception = e;
 				timeout = timeout.minus(sleep);
 			}
@@ -60,11 +62,11 @@ public class Session {
 			try {
 				Thread.sleep(sleep.toMillis());
 			} catch (InterruptedException e) {
-				throw exception;
+				throwUnchecked(exception);
 			}
 		}
 
-		throw exception;
+		return throwUnchecked(exception);
 	}
 
 	public Element findElement(By selector) {
