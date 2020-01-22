@@ -2,6 +2,10 @@ package immogram.webdriver;
 
 public class By {
 
+	public static By cssSelector(String value) {
+		return new By(Locator.CSS_SELECTOR, value);
+	}
+
 	private final Locator locator;
 	private final String value;
 
@@ -16,10 +20,6 @@ public class By {
 
 	public String value() {
 		return value;
-	}
-
-	public static By cssSelector(String value) {
-		return new By(Locator.CSS_SELECTOR, value);
 	}
 
 	public static enum Locator {
