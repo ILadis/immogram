@@ -51,7 +51,7 @@ public class PollingBot {
 		var message = update.message().getClass();
 
 		try {
-			var method = cls.getDeclaredMethod("handle", TelegramApi.class, message);
+			var method = cls.getMethod("handle", TelegramApi.class, message);
 			method.invoke(handler, telegram, update.message());
 			return true;
 		} catch (ReflectiveOperationException e) {
