@@ -2,6 +2,7 @@ package immogram.webscraper;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -13,7 +14,7 @@ import immogram.webdriver.WebDriver;
 import immogram.webscraper.utils.Timer;
 import immogram.webscraper.utils.Watcher;
 
-public class ImmoweltWebScraper implements WebScraper<Set<Apartment>> {
+public class ImmoweltWebScraper implements WebScraper<Apartment> {
 
 	private final String city;
 
@@ -22,7 +23,7 @@ public class ImmoweltWebScraper implements WebScraper<Set<Apartment>> {
 	}
 
 	@Override
-	public Set<Apartment> execute(WebDriver driver) {
+	public Collection<Apartment> execute(WebDriver driver) {
 		var session = Session.createNew(driver);
 		session.navigateTo(URI.create("https://www.immowelt.de/suche/wohnungen/mieten"));
 
