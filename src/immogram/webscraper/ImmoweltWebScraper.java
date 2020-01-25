@@ -2,7 +2,7 @@ package immogram.webscraper;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -29,7 +29,7 @@ public class ImmoweltWebScraper implements WebScraper<Set<Apartment>> {
 		submitSearch(session, city);
 		adjustDistance(session);
 
-		var apartments = new HashSet<Apartment>();
+		var apartments = new LinkedHashSet<Apartment>();
 		do {
 			addAllApartmentsOnPage(session, apartments);
 		} while (gotoNextPage(session));
