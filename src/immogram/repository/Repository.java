@@ -1,7 +1,8 @@
 package immogram.repository;
 
-import java.sql.SQLException;
+import java.util.Optional;
 
-public interface Repository<E> {
-	void save(E entity) throws SQLException;
+public interface Repository<I, E> {
+	Optional<E> findById(I id);
+	void save(E entity);
 }
