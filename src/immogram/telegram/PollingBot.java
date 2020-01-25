@@ -21,6 +21,12 @@ public class PollingBot {
 		handlers.add(handler);
 	}
 
+	public void registerAll(Handler<?> ...handlers) {
+		for (var handler : handlers) {
+			register(handler);
+		}
+	}
+
 	public void pollUpdates(Duration timeout) {
 		var updates = telegram.pollTextMessageUpdates(timeout, offset);
 
