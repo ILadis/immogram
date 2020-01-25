@@ -1,16 +1,16 @@
 package immogram;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Apartment {
 
 	private String id, description, location;
 	private Integer fee, space, rooms;
 	private URI picture;
-	private List<String> tags = new ArrayList<String>();
+	private Set<String> tags;
 
 	public String uniqueIdentifier() {
 		return id;
@@ -40,6 +40,10 @@ public class Apartment {
 		return picture;
 	}
 
+	public Set<String> tags() {
+		return Collections.unmodifiableSet(tags);
+	}
+
 	@Override
 	public int hashCode() {
 		return id.hashCode();
@@ -54,12 +58,9 @@ public class Apartment {
 		return super.equals(object);
 	}
 
-	public List<String> tags() {
-		return Collections.unmodifiableList(tags);
-	}
-
 	public static Builder newBuilder() {
 		var target = new Apartment();
+		target.tags = new HashSet<>();
 		return target.new Builder();
 	}
 
