@@ -34,9 +34,10 @@ class JsonReaders {
 		var message = object.getJsonObject("message");
 
 		var chatId = message.getJsonObject("chat").getInt("id");
+		var userId = message.getJsonObject("from").getInt("id");
 		var text = Optional.ofNullable(message.getString("text", null));
 
-		return new Update<>(updateId, new TextMessage(chatId, text));
+		return new Update<>(updateId, new TextMessage(chatId, userId, text));
 	}
 
 }
