@@ -31,14 +31,14 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 		submitSearch(session, city);
 		adjustDistance(session);
 
-		var apartments = new LinkedHashSet<Link>();
+		var links = new LinkedHashSet<Link>();
 		do {
-			addAllApartmentsOnPage(session, apartments);
+			addAllApartmentsOnPage(session, links);
 		} while (gotoNextPage(session));
 
 		session.close();
 
-		return apartments;
+		return links;
 	}
 
 	private void submitSearch(Session session, String city) {
@@ -60,8 +60,8 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 		submit.click();
 	}
 
-	private void addAllApartmentsOnPage(Session session, Set<Link> apartments) {
-		var watcher = Watcher.watch(apartments);
+	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
+		var watcher = Watcher.watch(links);
 		var unchanged = 0;
 
 		var duration = Duration.ofSeconds(3);
@@ -69,7 +69,7 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 		do {
 			if (!Timer.sleepFor(duration)) break;
 
-			addApartmentsCurrentlyOnPage(session, apartments);
+			addApartmentsCurrentlyOnPage(session, links);
 			scrollToBottom(session);
 
 			if (watcher.hasChanged()) unchanged = 0;
@@ -77,21 +77,21 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 		} while(unchanged < 3);
 	}
 
-	private void addApartmentsCurrentlyOnPage(Session session, Set<Link> apartments) {
+	private void addApartmentsCurrentlyOnPage(Session session, Set<Link> links) {
 		var elements = session.findElements(By.cssSelector(".listitem_wrap"));
 
 		for (var element : elements) {
 			var id = element.attr("data-oid");
-			var link = index.resolve("/expose/" + id);
+			var href = index.resolve("/expose/" + id);
 
 			var title = element.findElement(By.cssSelector("h2"));
 
-			var apartment = Link.newBuilder()
+			var link = Link.newBuilder()
 					.title(title.text())
-					.href(link)
+					.href(href)
 					.build();
 
-			apartments.add(apartment);
+			links.add(link);
 		}
 	}
 
