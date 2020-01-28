@@ -1,22 +1,24 @@
 package immogram.bot;
 
-import immogram.bot.ScraperCommand.ScraperTask;
+import java.util.Collection;
+
+import immogram.task.Task;
 import immogram.telegram.PollingBot;
 import immogram.telegram.TelegramApi;
 
 public class ImmogramBot extends PollingBot {
 
 	private final ObeyCommand obey;
-	private final ScraperCommand scraper;
+	private final TasksCommand scraper;
 
 	public ImmogramBot(TelegramApi telegram) {
 		super(telegram);
 		this.obey = new ObeyCommand();
-		this.scraper = new ScraperCommand();
+		this.scraper = new TasksCommand();
 		registerAll(obey, obey.wrap(scraper));
 	}
 
-	public void addScraperTask(ScraperTask task) {
+	public void addTask(Task<Void, Collection<String>> task) {
 		scraper.addTask(task);
 	}
 }
