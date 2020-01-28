@@ -7,6 +7,7 @@ public class TextMessage {
 	private final Integer chatId;
 	private final Integer userId;
 	private final Optional<String> text;
+	private boolean markdown;
 
 	public TextMessage(Integer chatId, Integer userId, Optional<String> text) {
 		this.chatId = chatId;
@@ -26,7 +27,15 @@ public class TextMessage {
 		return text;
 	}
 
+	public void enableMarkdown() {
+		markdown = true;
+	}
+
+	public boolean isMarkdownEnabled() {
+		return markdown;
+	}
+
 	public TextMessage response(String text) {
-		return new TextMessage(chatId, null, Optional.of(text));
+		return new TextMessage(chatId, 0, Optional.of(text));
 	}
 }

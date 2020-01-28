@@ -11,7 +11,7 @@ import immogram.telegram.TextMessage;
 class JsonBuilders {
 
 	static JsonObject forUpdate(Duration timeout, Optional<Integer> offset) {
-		var body = Json.createObjectBuilder()
+		var json = Json.createObjectBuilder()
 				.add("limit", 20)
 				.add("timeout", timeout.getSeconds())
 				.add("allowed_updates", Json.createArrayBuilder()
@@ -19,17 +19,22 @@ class JsonBuilders {
 						.build());
 
 		if (offset.isPresent()) {
-			body.add("offset", offset.get());
+			json.add("offset", offset.get());
 		}
 
-		return body.build();
+		return json.build();
 	}
 
 	static JsonObject forTextMessage(TextMessage message) {
-		return Json.createObjectBuilder()
+		var json = Json.createObjectBuilder()
 				.add("chat_id", message.chatId())
-				.add("text", message.text().get())
-				.build();
+				.add("text", message.text().get());
+
+		if (message.isMarkdownEnabled()) {
+			json.add("parse_mode", "markdown");
+		}
+
+		return json.build();
 	}
 
 }
