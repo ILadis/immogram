@@ -5,32 +5,33 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
-import immogram.Apartment;
+import immogram.Link;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
 import immogram.webscraper.utils.Timer;
 import immogram.webscraper.utils.Watcher;
 
-public class ImmoweltWebScraper implements WebScraper<Apartment> {
+public class ImmoweltWebScraper implements WebScraper<Link> {
 
+	private final URI index;
 	private final String city;
 
 	public ImmoweltWebScraper(String city) {
 		this.city = city;
+		this.index = URI.create("https://www.immowelt.de");
 	}
 
 	@Override
-	public Collection<Apartment> execute(WebDriver driver) {
+	public Collection<Link> execute(WebDriver driver) {
 		var session = Session.createNew(driver);
-		session.navigateTo(URI.create("https://www.immowelt.de/suche/wohnungen/mieten"));
+		session.navigateTo(index.resolve("/suche/wohnungen/mieten"));
 
 		submitSearch(session, city);
 		adjustDistance(session);
 
-		var apartments = new LinkedHashSet<Apartment>();
+		var apartments = new LinkedHashSet<Link>();
 		do {
 			addAllApartmentsOnPage(session, apartments);
 		} while (gotoNextPage(session));
@@ -59,7 +60,7 @@ public class ImmoweltWebScraper implements WebScraper<Apartment> {
 		submit.click();
 	}
 
-	private void addAllApartmentsOnPage(Session session, Set<Apartment> apartments) {
+	private void addAllApartmentsOnPage(Session session, Set<Link> apartments) {
 		var watcher = Watcher.watch(apartments);
 		var unchanged = 0;
 
@@ -76,22 +77,18 @@ public class ImmoweltWebScraper implements WebScraper<Apartment> {
 		} while(unchanged < 3);
 	}
 
-	private void addApartmentsCurrentlyOnPage(Session session, Set<Apartment> apartments) {
+	private void addApartmentsCurrentlyOnPage(Session session, Set<Link> apartments) {
 		var elements = session.findElements(By.cssSelector(".listitem_wrap"));
 
 		for (var element : elements) {
-			var description = element.findElement(By.cssSelector("h2"));
-			var location = element.findElement(By.cssSelector(".listlocation"));
-			//var tags = element.findElements(By.cssSelector(".eq_list li"));
-			var price = element.findElement(By.cssSelector(".price_rent strong"));
-			var rooms = element.findElement(By.cssSelector(".rooms"));
+			var id = element.attr("data-oid");
+			var link = index.resolve("/expose/" + id);
 
-			var apartment = Apartment.newBuilder()
-					.uniqueIdentifier(element.attr("data-oid"))
-					.description(description.text())
-					.location(location.text())
-					.rentalFee(parseInteger(price.text()))
-					.numRooms(parseInteger(rooms.text()))
+			var title = element.findElement(By.cssSelector("h2"));
+
+			var apartment = Link.newBuilder()
+					.title(title.text())
+					.href(link)
 					.build();
 
 			apartments.add(apartment);
@@ -114,16 +111,5 @@ public class ImmoweltWebScraper implements WebScraper<Apartment> {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	private Integer parseInteger(String value) {
-		var pattern = Pattern.compile("(\\d+)");
-		var matcher = pattern.matcher(value);
-
-		if (matcher.find()) {
-			return Integer.parseInt(matcher.group(0));
-		}
-
-		return null;
 	}
 }
