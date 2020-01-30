@@ -14,34 +14,41 @@ import immogram.telegram.TextMessage;
 
 public class TasksCommand extends Command {
 
-	private final Timer timer;
 	private final List<Task<Void, Collection<String>>> tasks;
+	private final Timer timer;
+	private TimerTask task;
+	private Duration period;
 
 	public TasksCommand() {
 		super("/tasks");
-		this.timer = new Timer();
 		this.tasks = new ArrayList<>();
+		this.timer = new Timer();
+		this.period = Duration.ofMinutes(5);
 	}
 
-	public void addTask(Task<Void, Collection<String>> task) {
+	public void add(Task<Void, Collection<String>> task) {
 		this.tasks.add(task);
+	}
+
+	public void setPeriod(Duration period) {
+		this.period = period;
 	}
 
 	@Override
 	protected void execute(TelegramApi telegram, TextMessage message) {
-		telegram.sendTextMessage(message.response("Scheduling tasks!"));
-		var task = createTimerTask(telegram, message);
-		scheduleTimerTask(task, Duration.ofMinutes(5));
+		if (task == null) {
+			telegram.sendTextMessage(message.response("Scheduling tasks!"));
+			task = createTimerTask(telegram, message);
+			scheduleTimerTask(task, period);
+		}
 	}
 
-	private void runTasks(TelegramApi telegram, TextMessage message) {
-		for (var task : tasks) {
-			var texts = task.execute(null);
+	private void runTask(Task<Void, Collection<String>> task, TelegramApi telegram, TextMessage message) {
+		var texts = task.execute(null);
 
-			for (var text : texts) {
-				var response = toTextMessage(message, text);
-				telegram.sendTextMessage(response);
-			}
+		for (var text : texts) {
+			var response = toTextMessage(message, text);
+			telegram.sendTextMessage(response);
 		}
 	}
 
@@ -52,10 +59,13 @@ public class TasksCommand extends Command {
 	}
 
 	private TimerTask createTimerTask(TelegramApi telegram, TextMessage message) {
+		var tasks = new ArrayList<>(this.tasks);
 		return new TimerTask() {
 			@Override
 			public void run() {
-				runTasks(telegram, message);
+				for (var task : tasks) {
+					runTask(task, telegram, message);
+				}
 			}
 		};
 	}

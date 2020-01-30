@@ -53,7 +53,7 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 		var dropdown = session.waitForElement(By.cssSelector(".umkreis"), Duration.ofSeconds(5));
 		dropdown.click();
 
-		var item = session.findElement(By.cssSelector("input[name='SearchRange'][value='5']"));
+		var item = session.findElement(By.cssSelector("input[name='SearchRange'][value='0']"));
 		item.click();
 
 		var submit = session.findElement(By.cssSelector("#btnSearch"));
