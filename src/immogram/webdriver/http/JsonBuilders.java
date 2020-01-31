@@ -1,6 +1,7 @@
 package immogram.webdriver.http;
 
 import java.net.URI;
+import java.util.Arrays;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -8,6 +9,17 @@ import javax.json.JsonObject;
 import immogram.webdriver.By;
 
 class JsonBuilders {
+
+	static JsonObject forCapabilitiesArgs(String ...args) {
+		var options = Json.createObjectBuilder()
+				.add("args", Json.createArrayBuilder(Arrays.asList(args)));
+
+		return Json.createObjectBuilder()
+				.add("capabilities", Json.createObjectBuilder()
+						.add("alwaysMatch", Json.createObjectBuilder()
+								.add("moz:firefoxOptions", options)))
+				.build();
+	}
 
 	static JsonObject forUrl(URI url) {
 		return Json.createObjectBuilder()

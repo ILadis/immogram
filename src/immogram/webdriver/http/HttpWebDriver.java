@@ -33,9 +33,11 @@ public class HttpWebDriver implements WebDriver {
 	@Override
 	public Session.Id newSession() {
 		var uri = root.resolve("/session");
+		var body = JsonBuilders.forCapabilitiesArgs("-headless");
+
 		var request = HttpRequest.newBuilder()
 				.uri(uri)
-				.POST(emptyJson());
+				.POST(asJson(body));
 
 		return execute(request, JsonReaders::forSessionId);
 	}
