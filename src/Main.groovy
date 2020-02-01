@@ -1,14 +1,15 @@
 #!/usr/bin/env groovy
 import java.time.*
 
+def env = System.getenv()
 def classLoader = this.class.classLoader.rootLoader
 
-('./lib' as File).eachFile { file ->
+(env.getOrDefault('LIBS', './lib') as File).eachFile { file ->
 	classLoader.addURL(file.toURL())
 }
 
 def props = new Properties()
-('./props' as File).withInputStream { stream ->
+(env.getOrDefault('PROPS', './props') as File).withInputStream { stream ->
 	props.load(stream)
 }
 
@@ -42,6 +43,7 @@ tasks.each { task ->
 	bot.tasks().setPeriod(Duration.ofHours(1))
 }
 
+'geckodriver'.execute()
 
 while (true) {
 	bot.pollUpdates(Duration.ofSeconds(30))
