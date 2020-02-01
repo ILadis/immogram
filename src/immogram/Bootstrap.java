@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.sql.DriverManager;
 import java.util.Collection;
 
+import immogram.bot.ImmogramBot;
 import immogram.repository.LinkRepository;
 import immogram.task.LinkToText;
 import immogram.task.SaveAndFilter;
@@ -22,6 +23,7 @@ public class Bootstrap {
 	private LinkRepository linkRepository;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
+	private ImmogramBot immogramBot;
 	private HttpClient httpClient;
 
 	public LinkRepository linkRepository() {
@@ -34,6 +36,13 @@ public class Bootstrap {
 
 	public TelegramApi telegramApi() {
 		return telegramApi;
+	}
+
+	public ImmogramBot immogramBot() {
+		if (immogramBot == null) {
+			immogramBot = new ImmogramBot(telegramApi);
+		}
+		return immogramBot;
 	}
 
 	public TaskFactory<String, Void, Collection<String>> immoweltScraperTask() {

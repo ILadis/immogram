@@ -11,14 +11,14 @@
 	<files>
 		<file>
 			<outputDirectory>./</outputDirectory>
-			<source>${project.build.directory}/${project.build.finalName}.jar</source>
-			<destName>${project.artifactId}.jar</destName>
+			<source>${project.build.sourceDirectory}/Main.groovy</source>
+			<destName>main.groovy</destName>
+			<fileMode>0755</fileMode>
 		</file>
 	</files>
 	<dependencySets>
 		<dependencySet>
 			<outputDirectory>./lib/</outputDirectory>
-			<useProjectArtifact>false</useProjectArtifact>
 		</dependencySet>
 	</dependencySets>
 </assembly>
