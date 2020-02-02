@@ -25,20 +25,19 @@ public class ImmoweltWebScraper implements WebScraper<Link> {
 
 	@Override
 	public Collection<Link> execute(WebDriver driver) {
-		var session = Session.createNew(driver);
-		session.navigateTo(index.resolve("/suche/wohnungen/mieten"));
+		try (var session = Session.createNew(driver)) {
+			session.navigateTo(index.resolve("/suche/wohnungen/mieten"));
 
-		submitSearch(session, city);
-		adjustDistance(session);
+			submitSearch(session, city);
+			adjustDistance(session);
 
-		var links = new LinkedHashSet<Link>();
-		do {
-			addAllApartmentsOnPage(session, links);
-		} while (gotoNextPage(session));
+			var links = new LinkedHashSet<Link>();
+			do {
+				addAllApartmentsOnPage(session, links);
+			} while (gotoNextPage(session));
 
-		session.close();
-
-		return links;
+			return links;
+		}
 	}
 
 	private void submitSearch(Session session, String city) {

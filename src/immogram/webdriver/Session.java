@@ -1,13 +1,13 @@
 package immogram.webdriver;
 
-import static immogram.Exceptions.throwUnchecked;
-
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Session {
+import immogram.Exceptions;
+
+public class Session implements AutoCloseable {
 
 	public static class Id {
 		private String value;
@@ -62,11 +62,11 @@ public class Session {
 			try {
 				Thread.sleep(sleep.toMillis());
 			} catch (InterruptedException e) {
-				throwUnchecked(exception);
+				Exceptions.throwUnchecked(exception);
 			}
 		}
 
-		return throwUnchecked(exception);
+		return Exceptions.throwUnchecked(exception);
 	}
 
 	public Element findElement(By selector) {
@@ -87,6 +87,7 @@ public class Session {
 				.collect(Collectors.toList());
 	}
 
+	@Override
 	public void close() {
 		driver.closeSession(sessionId);
 	}
