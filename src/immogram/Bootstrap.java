@@ -3,13 +3,16 @@ package immogram;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.sql.DriverManager;
+import java.time.Duration;
 import java.util.Collection;
 
 import immogram.bot.ImmogramBot;
 import immogram.repository.LinkRepository;
 import immogram.task.LinkToText;
+import immogram.task.Retry;
 import immogram.task.SaveAndFilter;
 import immogram.task.ScrapeWeb;
+import immogram.task.Task;
 import immogram.task.TaskFactory;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.http.HttpTelegramApi;
@@ -17,6 +20,7 @@ import immogram.webdriver.WebDriver;
 import immogram.webdriver.http.HttpWebDriver;
 import immogram.webscraper.EbayWebScraper;
 import immogram.webscraper.ImmoweltWebScraper;
+import immogram.webscraper.WebScraper;
 
 public class Bootstrap {
 
@@ -46,13 +50,15 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Collection<String>> immoweltScraperTask() {
-		return term -> new ScrapeWeb<>(webDriver, new ImmoweltWebScraper(term))
-				.pipe(new SaveAndFilter<>(linkRepository, Link::href))
-				.pipe(new LinkToText());
+		return term -> scraperTask(new ImmoweltWebScraper(term));
 	}
 
 	public TaskFactory<String, Void, Collection<String>> ebayScraperTask() {
-		return term -> new ScrapeWeb<>(webDriver, new EbayWebScraper(term))
+		return term -> scraperTask(new EbayWebScraper(term));
+	}
+
+	private Task<Void, Collection<String>> scraperTask(WebScraper<Link> scraper) {
+		return new Retry<>(5, Duration.ofMillis(100), new ScrapeWeb<>(webDriver, scraper))
 				.pipe(new SaveAndFilter<>(linkRepository, Link::href))
 				.pipe(new LinkToText());
 	}
