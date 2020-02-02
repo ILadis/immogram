@@ -1,5 +1,6 @@
 package immogram.bot;
 
+import immogram.bot.PingCommand.PongCommand;
 import immogram.telegram.PollingBot;
 import immogram.telegram.TelegramApi;
 
@@ -13,6 +14,8 @@ public class ImmogramBot extends PollingBot {
 		this.obey = new ObeyCommand();
 		this.tasks = new TasksCommand();
 		registerAll(obey, obey.wrap(tasks));
+		register(obey.wrap(new PingCommand()));
+		register(obey.wrap(new PongCommand()));
 	}
 
 	public TasksCommand tasks() {

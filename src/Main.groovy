@@ -40,7 +40,7 @@ def bot = bootstrap.immogramBot()
 
 tasks.each { task ->
 	bot.tasks().add(task)
-	bot.tasks().setPeriod(Duration.ofHours(1))
+	bot.tasks().setPeriod(Duration.ofHours(3))
 }
 
 'geckodriver'.execute()

@@ -10,7 +10,7 @@ public class ObeyCommand extends Command {
 	private Integer chatId, userId;
 
 	public ObeyCommand() {
-		super("/obey");
+		super("/start");
 	}
 
 	public Handler<TextMessage> wrap(Handler<TextMessage> command) {
