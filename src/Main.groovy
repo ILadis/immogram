@@ -43,7 +43,8 @@ tasks.each { task ->
 	bot.tasks().setPeriod(Duration.ofHours(3))
 }
 
-'geckodriver'.execute()
+def process = 'geckodriver'.execute()
+process.consumeProcessOutput(System.out, System.err)
 
 while (true) {
 	bot.pollUpdates(Duration.ofSeconds(30))
