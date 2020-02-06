@@ -46,8 +46,9 @@ class Messages {
 		return MessageFormat.format(pattern, trace);
 	}
 
-	public String taskWithoutException() {
-		return bundle.getString("taskWithoutException");
+	public String taskWithoutException(ManagedTask<?> task) {
+		var pattern = bundle.getString("taskWithoutException");
+		return MessageFormat.format(pattern, task.alias());
 	}
 
 	public String taskStatus(ManagedTask<?> task) {

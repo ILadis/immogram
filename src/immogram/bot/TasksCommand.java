@@ -70,7 +70,7 @@ class TasksCommand extends Command {
 				var response = message.response(messages.taskWithException(exception.get()));
 				telegram.sendTextMessage(response);
 			} else {
-				var response = message.response(messages.taskWithoutException());
+				var response = message.response(messages.taskWithoutException(task));
 				telegram.sendTextMessage(response);
 			}
 		};
