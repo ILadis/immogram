@@ -4,6 +4,8 @@ import java.net.URI;
 
 public class Link {
 
+	private Link() { }
+
 	private String title;
 	private URI href;
 
@@ -35,6 +37,9 @@ public class Link {
 	}
 
 	public class Builder {
+
+		private Builder() { }
+
 		public Builder title(String value) {
 			title = value;
 			return this;

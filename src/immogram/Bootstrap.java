@@ -24,6 +24,8 @@ import immogram.webscraper.WebScraper;
 
 public class Bootstrap {
 
+	private Bootstrap() { }
+
 	private LinkRepository linkRepository;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
@@ -76,6 +78,9 @@ public class Bootstrap {
 	}
 
 	public class Builder {
+
+		private Builder() { }
+
 		public Builder jdbcUrl(String url) throws Throwable {
 			var conn = DriverManager.getConnection(url);
 			linkRepository = LinkRepository.openNew(conn);
