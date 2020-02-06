@@ -8,7 +8,7 @@ import java.util.Set;
 public class PollingBot {
 
 	private final TelegramApi telegram;
-	private final Set<Handler<?>> handlers;
+	private final Set<Handler> handlers;
 	private Optional<Integer> offset;
 
 	public PollingBot(TelegramApi telegram) {
@@ -17,18 +17,18 @@ public class PollingBot {
 		this.offset = Optional.empty();
 	}
 
-	public void register(Handler<?> handler) {
+	public void register(Handler handler) {
 		handlers.add(handler);
 	}
 
-	public void registerAll(Handler<?> ...handlers) {
+	public void registerAll(Handler ...handlers) {
 		for (var handler : handlers) {
 			register(handler);
 		}
 	}
 
 	public void pollUpdates(Duration timeout) {
-		var updates = telegram.pollTextMessageUpdates(timeout, offset);
+		var updates = telegram.pollUpdates(timeout, offset);
 
 		for (var update : updates) {
 			advanceOffset(update.id());
@@ -46,7 +46,7 @@ public class PollingBot {
 		}
 	}
 
-	private boolean invokeIfCompatible(Handler<?> handler, Update<?> update) {
+	private boolean invokeIfCompatible(Handler handler, Update<?> update) {
 		var cls = handler.getClass();
 		var message = update.message().getClass();
 

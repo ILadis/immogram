@@ -1,5 +1,6 @@
 package immogram.telegram;
 
-public interface Handler<M> {
-	void handle(TelegramApi telegram, M message);
+public abstract class Handler {
+	public void handle(TelegramApi telegram, TextMessage message) { }
+	public void handle(TelegramApi telegram, CallbackQuery callback) { }
 }

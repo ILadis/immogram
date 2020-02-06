@@ -17,6 +17,7 @@ import java.util.function.Function;
 import javax.json.JsonStructure;
 
 import immogram.Exceptions;
+import immogram.telegram.CallbackQuery;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.TextMessage;
 import immogram.telegram.Update;
@@ -34,7 +35,7 @@ public class HttpTelegramApi implements TelegramApi {
 	}
 
 	@Override
-	public List<Update<TextMessage>> pollTextMessageUpdates(Duration timeout, Optional<Integer> offset) {
+	public List<Update<?>> pollUpdates(Duration timeout, Optional<Integer> offset) {
 		var body = JsonBuilders.forUpdate(timeout, offset);
 		var uri = uriForMethod("getUpdates");
 
@@ -43,13 +44,26 @@ public class HttpTelegramApi implements TelegramApi {
 				.header("Content-Type", "application/json")
 				.POST(asJson(body));
 
-		return execute(request, JsonReaders::forTextMessageUpdates);
+		return execute(request, JsonReaders::forUpdates);
 	}
 
 	@Override
 	public void sendTextMessage(TextMessage message) {
 		var body = JsonBuilders.forTextMessage(message);
 		var uri = uriForMethod("sendMessage");
+
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.header("Content-Type", "application/json")
+				.POST(asJson(body));
+
+		execute(request);
+	}
+
+	@Override
+	public void answerCallbackQuery(CallbackQuery callback) {
+		var body = JsonBuilders.forCallbackQuery(callback);
+		var uri = uriForMethod("answerCallbackQuery");
 
 		var request = HttpRequest.newBuilder()
 				.uri(uri)

@@ -1,6 +1,6 @@
 package immogram.telegram;
 
-public class Command implements Handler<TextMessage> {
+public class Command extends Handler {
 
 	private final String prefix;
 	private final Runner runner;

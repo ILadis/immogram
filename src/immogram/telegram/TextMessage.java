@@ -6,10 +6,10 @@ public class TextMessage {
 
 	private final Integer chatId;
 	private final Integer userId;
-	private final Optional<String> text;
-	private boolean markdown;
+	private final String text;
+	private InlineKeyboard replyKeyboard;
 
-	public TextMessage(Integer chatId, Integer userId, Optional<String> text) {
+	public TextMessage(Integer chatId, Integer userId, String text) {
 		this.chatId = chatId;
 		this.userId = userId;
 		this.text = text;
@@ -24,18 +24,20 @@ public class TextMessage {
 	}
 
 	public Optional<String> text() {
-		return text;
+		return Optional.ofNullable(text);
 	}
 
-	public void enableMarkdown() {
-		markdown = true;
-	}
-
-	public boolean isMarkdownEnabled() {
-		return markdown;
+	public Optional<InlineKeyboard> replyKeyboard() {
+		return Optional.ofNullable(replyKeyboard);
 	}
 
 	public TextMessage response(String text) {
-		return new TextMessage(chatId, 0, Optional.of(text));
+		return new TextMessage(chatId, 0, text);
+	}
+
+	public TextMessage response(String text, InlineKeyboard replyKeyboard) {
+		var message = new TextMessage(chatId, 0, text);
+		message.replyKeyboard = replyKeyboard;
+		return message;
 	}
 }
