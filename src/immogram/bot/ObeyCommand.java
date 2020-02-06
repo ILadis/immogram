@@ -1,27 +1,38 @@
 package immogram.bot;
 
+import java.util.function.Supplier;
+
+import immogram.telegram.CallbackQuery;
 import immogram.telegram.Command;
 import immogram.telegram.Handler;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.TextMessage;
 
-public class ObeyCommand extends Command {
+class ObeyCommand extends Command {
 
+	private final Messages messages;
 	private Integer chatId, userId;
 
-	public ObeyCommand() {
+	public ObeyCommand(Messages messages) {
 		super("/start");
+		this.messages = messages;
 	}
 
-	public Handler<TextMessage> wrap(Handler<TextMessage> command) {
+	public Handler wrap(Handler command) {
 		return new ObeyingHandler(command);
+	}
+
+	public Supplier<Integer> chatId() {
+		return () -> chatId;
 	}
 
 	@Override
 	protected void execute(TelegramApi telegram, TextMessage message) {
 		if (isFromObeyingUser(message)) {
 			obeyUserAndChat(message);
-			telegram.sendTextMessage(message.response("I'll obey this user/chat now!"));
+
+			var response = message.response(messages.obeyingChat());
+			telegram.sendTextMessage(response);
 		}
 	}
 
@@ -39,11 +50,11 @@ public class ObeyCommand extends Command {
 		chatId = message.chatId();
 	}
 
-	public class ObeyingHandler implements Handler<TextMessage> {
+	public class ObeyingHandler extends Handler {
 
-		private final Handler<TextMessage> delegate;
+		private final Handler delegate;
 
-		public ObeyingHandler(Handler<TextMessage> delegate) {
+		public ObeyingHandler(Handler delegate) {
 			this.delegate = delegate;
 		}
 
@@ -52,6 +63,11 @@ public class ObeyCommand extends Command {
 			if (isFromObeyingChat(message)) {
 				delegate.handle(telegram, message);
 			}
+		}
+
+		@Override
+		public void handle(TelegramApi telegram, CallbackQuery callback) {
+			delegate.handle(telegram, callback);
 		}
 	}
 

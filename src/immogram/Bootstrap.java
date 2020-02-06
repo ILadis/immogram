@@ -4,7 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.sql.DriverManager;
 import java.time.Duration;
-import java.util.Collection;
+import java.util.Locale;
 
 import immogram.bot.ImmogramBot;
 import immogram.repository.LinkRepository;
@@ -12,6 +12,7 @@ import immogram.task.LinkToText;
 import immogram.task.Retry;
 import immogram.task.SaveAndFilter;
 import immogram.task.ScrapeWeb;
+import immogram.task.SendTextMessages;
 import immogram.task.Task;
 import immogram.task.TaskFactory;
 import immogram.telegram.TelegramApi;
@@ -26,6 +27,7 @@ public class Bootstrap {
 
 	private Bootstrap() { }
 
+	private Locale messagesLocale;
 	private LinkRepository linkRepository;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
@@ -46,23 +48,24 @@ public class Bootstrap {
 
 	public ImmogramBot immogramBot() {
 		if (immogramBot == null) {
-			immogramBot = new ImmogramBot(telegramApi);
+			immogramBot = new ImmogramBot(telegramApi, messagesLocale);
 		}
 		return immogramBot;
 	}
 
-	public TaskFactory<String, Void, Collection<String>> immoweltScraperTask() {
+	public TaskFactory<String, Void, Void> immoweltScraperTask() {
 		return term -> scraperTask(new ImmoweltWebScraper(term));
 	}
 
-	public TaskFactory<String, Void, Collection<String>> ebayScraperTask() {
+	public TaskFactory<String, Void, Void> ebayScraperTask() {
 		return term -> scraperTask(new EbayWebScraper(term));
 	}
 
-	private Task<Void, Collection<String>> scraperTask(WebScraper<Link> scraper) {
-		return new Retry<>(5, Duration.ofMillis(100), new ScrapeWeb<>(webDriver, scraper))
-				.pipe(new SaveAndFilter<>(linkRepository, Link::href))
-				.pipe(new LinkToText());
+	private Task<Void, Void> scraperTask(WebScraper<Link> scraper) {
+		return new Retry<>(5, Duration.ofMillis(100), new ScrapeWeb<>(webDriver(), scraper))
+				.pipe(new SaveAndFilter<>(linkRepository(), Link::href))
+				.pipe(new LinkToText())
+				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
 	}
 
 	private HttpClient httpClient() {
@@ -80,6 +83,11 @@ public class Bootstrap {
 	public class Builder {
 
 		private Builder() { }
+
+		public Builder messagesLocale(Locale locale) {
+			messagesLocale = locale;
+			return this;
+		}
 
 		public Builder jdbcUrl(String url) throws Throwable {
 			var conn = DriverManager.getConnection(url);

@@ -1,77 +1,93 @@
 package immogram.bot;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import immogram.task.Task;
+import immogram.task.TaskManager;
+import immogram.task.TaskManager.ManagedTask;
+import immogram.telegram.CallbackQuery;
 import immogram.telegram.Command;
+import immogram.telegram.InlineKeyboard;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.TextMessage;
 
-public class TasksCommand extends Command {
+class TasksCommand extends Command {
 
-	private final List<Task<Void, Collection<String>>> tasks;
-	private final Timer timer;
-	private TimerTask task;
-	private Duration period;
+	private final Messages messages;
+	private final TaskManager manager;
+	private InlineKeyboard keyboard;
 
-	public TasksCommand() {
+	public TasksCommand(Messages messages, TaskManager manager) {
 		super("/tasks");
-		this.tasks = new ArrayList<>();
-		this.timer = new Timer();
-		this.period = Duration.ofMinutes(5);
+		this.messages = messages;
+		this.manager = manager;
 	}
 
-	public void add(Task<Void, Collection<String>> task) {
-		this.tasks.add(task);
-	}
-
-	public void setPeriod(Duration period) {
-		this.period = period;
+	@Override
+	public void handle(TelegramApi telegram, CallbackQuery callback) {
+		telegram.answerCallbackQuery(callback);
+		if (keyboard != null) {
+			keyboard.actionOf(callback).ifPresent(action -> action.run());
+		}
 	}
 
 	@Override
 	protected void execute(TelegramApi telegram, TextMessage message) {
-		if (task == null) {
-			telegram.sendTextMessage(message.response("Scheduling tasks!"));
-			task = createTimerTask(telegram, message);
-			scheduleTimerTask(task, period);
-		}
+		keyboard = newTasksKeyboard(telegram, message);
+		var response = message.response(messages.taskListing(), keyboard);
+		telegram.sendTextMessage(response);
 	}
 
-	private void runTask(Task<Void, Collection<String>> task, TelegramApi telegram, TextMessage message) {
-		var texts = task.execute(null);
+	private InlineKeyboard newTasksKeyboard(TelegramApi telegram, TextMessage message) {
+		var keyboard = InlineKeyboard.newBuilder();
 
-		for (var text : texts) {
-			var response = toTextMessage(message, text);
+		for (var task : manager.listAll()) {
+			keyboard.addRow().addButton(task.alias(), showTaskStatus(telegram, message, task));
+		}
+
+		return keyboard.build();
+	}
+
+	private Runnable showTaskStatus(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
+		return () -> {
+			keyboard = newStatusKeyboard(telegram, message, task);
+			var response = message.response(messages.taskStatus(task), keyboard);
 			telegram.sendTextMessage(response);
-		}
+		};
 	}
 
-	private TextMessage toTextMessage(TextMessage message, String text) {
-		var response = message.response(text);
-		response.enableMarkdown();
-		return response;
+	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
+		return InlineKeyboard.newBuilder()
+				.addRow()
+				.addButton(messages.scheduleOrCancelTask(), scheduleOrCancelTask(telegram, message, task))
+				.addButton(messages.showLastRunException(), showTaskException(telegram, message, task))
+				.build();
 	}
 
-	private TimerTask createTimerTask(TelegramApi telegram, TextMessage message) {
-		var tasks = new ArrayList<>(this.tasks);
-		return new TimerTask() {
-			@Override
-			public void run() {
-				for (var task : tasks) {
-					runTask(task, telegram, message);
-				}
+	private Runnable showTaskException(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
+		return () -> {
+			var exception = task.lastRunException();
+			if (exception.isPresent()) {
+				var response = message.response(messages.taskWithException(exception.get()));
+				telegram.sendTextMessage(response);
+			} else {
+				var response = message.response(messages.taskWithoutException());
+				telegram.sendTextMessage(response);
 			}
 		};
 	}
 
-	private void scheduleTimerTask(TimerTask task, Duration period) {
-		timer.scheduleAtFixedRate(task, 0, period.toMillis());
+	private Runnable scheduleOrCancelTask(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
+		return () -> {
+			if (task.isScheduled()) {
+				task.cancel();
+				var response = message.response(messages.taskCancelled(task));
+				telegram.sendTextMessage(response);
+			} else {
+				task.schedule(Duration.ofHours(3));
+				var response = message.response(messages.taskScheduled(task));
+				telegram.sendTextMessage(response);
+			}
+		};
 	}
 
 }

@@ -4,7 +4,7 @@ import immogram.telegram.Command;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.TextMessage;
 
-public class PingCommand extends Command {
+class PingCommand extends Command {
 
 	public PingCommand() {
 		super("/ping");
