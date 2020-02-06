@@ -1,5 +1,8 @@
 package immogram;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public class Exceptions {
 
 	@SuppressWarnings("unchecked")
@@ -10,6 +13,13 @@ public class Exceptions {
 	public static <R> R throwUnchecked(Throwable exception) {
 		Exceptions.<RuntimeException>throwAsUnchecked(exception);
 		return null;
+	}
+
+	public static String stackTraceOf(Throwable exception) {
+		StringWriter writer = new StringWriter();
+		PrintWriter printer = new PrintWriter(writer);
+		exception.printStackTrace(printer);
+		return writer.toString();
 	}
 
 }
