@@ -8,6 +8,7 @@ public class Command extends Handler {
 
 	private final String prefix;
 	private final Runner runner;
+	private Runner nextRunner;
 	private InlineKeyboard keyboard;
 
 	public Command(String prefix) {
@@ -25,7 +26,10 @@ public class Command extends Handler {
 		var wrapped = new WrappedTelegramApi(telegram);
 		var command = message.text().orElse("");
 
-		if (command.startsWith(prefix)) {
+		if (nextRunner != null) {
+			nextRunner.run(wrapped, message);
+			nextRunner = null;
+		} else if (command.startsWith(prefix)) {
 			runner.run(wrapped, message);
 		}
 	}
@@ -41,6 +45,10 @@ public class Command extends Handler {
 	}
 
 	protected void execute(TelegramApi telegram, TextMessage message) { }
+
+	protected void onNextMessage(Runner runner) {
+		nextRunner = runner;
+	}
 
 	public static interface Runner {
 		void run(TelegramApi telegram, TextMessage message);
