@@ -10,6 +10,10 @@ public class TextMessage {
 	private final String text;
 	private InlineKeyboard replyKeyboard;
 
+	public TextMessage(Integer chatId, String text) {
+		this(null, chatId, 0, text);
+	}
+
 	public TextMessage(Integer id, Integer chatId, Integer userId, String text) {
 		this.id = id;
 		this.chatId = chatId;
@@ -38,11 +42,11 @@ public class TextMessage {
 	}
 
 	public TextMessage response(String text) {
-		return new TextMessage(null, chatId, 0, text);
+		return new TextMessage(chatId, text);
 	}
 
 	public TextMessage response(String text, InlineKeyboard replyKeyboard) {
-		var message = new TextMessage(null, chatId, 0, text);
+		var message = new TextMessage(chatId, text);
 		message.replyKeyboard = replyKeyboard;
 		return message;
 	}
