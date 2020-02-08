@@ -15,7 +15,6 @@ class TasksCommand extends Command {
 
 	private final Messages messages;
 	private final TaskManager manager;
-	private InlineKeyboard keyboard;
 
 	public TasksCommand(Messages messages, TaskManager manager) {
 		super("/tasks");
@@ -26,36 +25,24 @@ class TasksCommand extends Command {
 	@Override
 	protected void execute(TelegramApi telegram, TextMessage message) {
 		var text = messages.taskListing();
-		message = message.response(text, newListingKeyboard(telegram));
-		telegram.sendTextMessage(message);
-		keyboard = message.replyKeyboard().orElse(null);
-	}
-
-	@Override
-	public void handle(TelegramApi telegram, CallbackQuery callback) {
-		telegram.answerCallbackQuery(callback);
-		if (keyboard != null) {
-			keyboard.actionOf(callback).ifPresent(action -> action.run());
-		}
+		var keyboard = newListingKeyboard(telegram);
+		telegram.sendTextMessage(message.response(text, keyboard));
 	}
 
 	private Consumer<CallbackQuery> showListing(TelegramApi telegram) {
 		return callback -> {
 			var message = callback.message().get();
 			var text = messages.taskListing();
-			message = message.edit(text, newListingKeyboard(telegram));
-			telegram.editTextMessage(message);
-			keyboard = message.replyKeyboard().orElse(null);
+			var keyboard = newListingKeyboard(telegram);
+			telegram.editTextMessage(message.edit(text, keyboard));
 		};
 	}
 
 	private InlineKeyboard newListingKeyboard(TelegramApi telegram) {
 		var keyboard = InlineKeyboard.newBuilder();
-
 		for (var task : manager.listAll()) {
 			keyboard.addRow().addButton(task.alias(), showStatus(telegram, task));
 		}
-
 		return keyboard.build();
 	}
 
@@ -63,9 +50,8 @@ class TasksCommand extends Command {
 		return callback -> {
 			var message = callback.message().get();
 			var text = messages.taskStatus(task);
-			message = message.edit(text, newStatusKeyboard(telegram, task));
-			telegram.editTextMessage(message);
-			keyboard = message.replyKeyboard().orElse(null);
+			var keyboard = newStatusKeyboard(telegram, task);
+			telegram.editTextMessage(message.edit(text, keyboard));
 		};
 	}
 
@@ -86,14 +72,12 @@ class TasksCommand extends Command {
 			if (exception.isPresent()) {
 				var text = messages.taskWithException(task);
 				var keyboard = newBackToStatusKeyboard(telegram, task);
-				message = message.edit(text, keyboard);
+				telegram.editTextMessage(message.edit(text, keyboard));
 			} else {
 				var text = messages.taskWithoutException(task);
 				var keyboard = newBackToStatusKeyboard(telegram, task);
-				message = message.edit(text, keyboard);
+				telegram.editTextMessage(message.edit(text, keyboard));
 			}
-			telegram.editTextMessage(message);
-			keyboard = message.replyKeyboard().orElse(null);
 		};
 	}
 
@@ -104,15 +88,13 @@ class TasksCommand extends Command {
 				task.cancel();
 				var text = messages.taskCancelled(task);
 				var keyboard = newBackToStatusKeyboard(telegram, task);
-				message = message.edit(text, keyboard);
+				telegram.editTextMessage(message.edit(text, keyboard));
 			} else {
 				task.schedule(Duration.ofHours(3));
 				var text = messages.taskScheduled(task);
 				var keyboard = newBackToStatusKeyboard(telegram, task);
-				message = message.edit(text, keyboard);
+				telegram.editTextMessage(message.edit(text, keyboard));
 			}
-			telegram.editTextMessage(message);
-			keyboard = message.replyKeyboard().orElse(null);
 		};
 	}
 
