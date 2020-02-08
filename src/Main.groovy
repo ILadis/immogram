@@ -13,6 +13,9 @@ def props = new Properties()
 	props.load(stream)
 }
 
+def gecko = 'geckodriver'.execute()
+gecko.consumeProcessOutput(System.out, System.err)
+
 def builder = {
 	return Class.forName('immogram.Bootstrap')
 			.getMethod('newBuilder')
@@ -27,23 +30,18 @@ def bootstrap = builder()
 		.build()
 
 def bot = bootstrap.immogramBot()
+def manager = bot.taskManager()
 
-def taskRegistration = { factory, prefix ->
-	return { term -> bot.taskManager().register(prefix + " - " + term, factory.create(term)) }
-}
+def immowelt = manager.register("Immowelt", bootstrap.immoweltScraperTask())
+def ebay = manager.register("Ebay", bootstrap.ebayScraperTask())
 
-def immowelt = taskRegistration(bootstrap.immoweltScraperTask(), 'Immowelt')
-def ebay = taskRegistration(bootstrap.ebayScraperTask(), 'Ebay')
+immowelt.create("91413 Neustadt an der Aisch")
+immowelt.create("97346 Iphofen")
+ebay.create("91413 Neustadt an der Aisch")
+ebay.create("97346 Iphofen")
 
-immowelt("91413 Neustadt an der Aisch")
-immowelt("97346 Iphofen")
-ebay("91413 Neustadt an der Aisch")
-ebay("97346 Iphofen")
-
-
-def process = 'geckodriver'.execute()
-process.consumeProcessOutput(System.out, System.err)
+def timeout = Duration.ofSeconds(30)
 
 while (true) {
-	bot.pollUpdates(Duration.ofSeconds(30))
+	bot.pollUpdates(timeout)
 }
