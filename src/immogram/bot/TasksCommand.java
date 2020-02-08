@@ -30,7 +30,7 @@ class TasksCommand extends Command {
 	}
 
 	private Consumer<CallbackQuery> showListing(TelegramApi telegram) {
-		return callback -> {
+		return (callback) -> {
 			var message = callback.message().get();
 			var text = messages.taskListing();
 			var keyboard = newListingKeyboard(telegram);
@@ -47,7 +47,7 @@ class TasksCommand extends Command {
 	}
 
 	private Consumer<CallbackQuery> showStatus(TelegramApi telegram, ManagedTask task) {
-		return callback -> {
+		return (callback) -> {
 			var message = callback.message().get();
 			var text = messages.taskStatus(task);
 			var keyboard = newStatusKeyboard(telegram, task);
@@ -58,15 +58,15 @@ class TasksCommand extends Command {
 	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, ManagedTask task) {
 		return InlineKeyboard.newBuilder()
 				.addRow()
-				.addButton(messages.scheduleOrCancelTask(), scheduleOrCancel(telegram, task))
-				.addButton(messages.showLastRunException(), showException(telegram, task))
+				.addButton(messages.taskScheduleOrCancel(), scheduleOrCancel(telegram, task))
+				.addButton(messages.taskLastRunException(), showException(telegram, task))
 				.addRow()
 				.addButton(messages.taskBackToListing(), showListing(telegram))
 				.build();
 	}
 
 	private Consumer<CallbackQuery> showException(TelegramApi telegram, ManagedTask task) {
-		return callback -> {
+		return (callback) -> {
 			var message = callback.message().get();
 			var exception = task.lastRunException();
 			if (exception.isPresent()) {
@@ -82,7 +82,7 @@ class TasksCommand extends Command {
 	}
 
 	private Consumer<CallbackQuery> scheduleOrCancel(TelegramApi telegram, ManagedTask task) {
-		return callback -> {
+		return (callback) -> {
 			var message = callback.message().get();
 			if (task.isScheduled()) {
 				task.cancel();

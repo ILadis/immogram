@@ -26,6 +26,19 @@ class Messages {
 		return bundle.getString("obeyingChat");
 	}
 
+	public String factoryListing() {
+		return bundle.getString("factoryListing");
+	}
+
+	public String factoryRequestTerm() {
+		return bundle.getString("factoryRequestTerm");
+	}
+
+	public String factoryTaskCreated(ManagedTask task) {
+		var pattern = bundle.getString("factoryTaskCreated");
+		return MessageFormat.format(pattern, task.alias());
+	}
+
 	public String taskListing() {
 		return bundle.getString("taskListing");
 	}
@@ -67,12 +80,12 @@ class Messages {
 				taskHasRunException(task));
 	}
 
-	public String scheduleOrCancelTask() {
-		return bundle.getString("scheduleOrCancelTask");
+	public String taskScheduleOrCancel() {
+		return bundle.getString("taskScheduleOrCancel");
 	}
 
-	public String showLastRunException() {
-		return bundle.getString("showLastRunException");
+	public String taskLastRunException() {
+		return bundle.getString("taskLastRunException");
 	}
 
 	private String taskIsScheduled(ManagedTask task) {
