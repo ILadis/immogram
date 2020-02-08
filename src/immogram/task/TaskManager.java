@@ -37,6 +37,11 @@ public class TaskManager {
 		return managed;
 	}
 
+	public void remove(ManagedTask task) {
+		task.cancel();
+		this.tasks.remove(task);
+	}
+
 	public List<ManagedTask> listTasks() {
 		return Collections.unmodifiableList(tasks);
 	}

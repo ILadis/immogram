@@ -61,6 +61,11 @@ class Messages {
 		return MessageFormat.format(pattern, task.alias());
 	}
 
+	public String taskDeleted(ManagedTask task) {
+		var pattern = bundle.getString("taskDeleted");
+		return MessageFormat.format(pattern, task.alias());
+	}
+
 	public String taskWithException(ManagedTask task) {
 		var trace = Exceptions.stackTraceOf(task.lastRunException().get());
 		var pattern = bundle.getString("taskWithException");
@@ -124,4 +129,5 @@ class Messages {
 	private String timeFormat(TemporalAccessor temporal) {
 		return timeFormatter.format(temporal);
 	}
+
 }

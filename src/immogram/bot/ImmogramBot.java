@@ -26,6 +26,7 @@ public class ImmogramBot extends PollingBot {
 		registerAll(obeyCommand,
 				obeyCommand.wrap(new TasksCommand(messages, taskManager)),
 				obeyCommand.wrap(new CreateTaskCommand(messages, taskManager)),
+				obeyCommand.wrap(new DeleteTaskCommand(messages, taskManager)),
 				obeyCommand.wrap(new PingCommand()),
 				obeyCommand.wrap(new PongCommand()));
 	}
