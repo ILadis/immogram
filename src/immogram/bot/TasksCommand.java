@@ -59,7 +59,7 @@ class TasksCommand extends Command {
 		return keyboard.build();
 	}
 
-	private Consumer<CallbackQuery> showStatus(TelegramApi telegram, ManagedTask<?> task) {
+	private Consumer<CallbackQuery> showStatus(TelegramApi telegram, ManagedTask task) {
 		return callback -> {
 			var message = callback.message().get();
 			var text = messages.taskStatus(task);
@@ -69,7 +69,7 @@ class TasksCommand extends Command {
 		};
 	}
 
-	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, ManagedTask<?> task) {
+	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, ManagedTask task) {
 		return InlineKeyboard.newBuilder()
 				.addRow()
 				.addButton(messages.scheduleOrCancelTask(), scheduleOrCancel(telegram, task))
@@ -79,7 +79,7 @@ class TasksCommand extends Command {
 				.build();
 	}
 
-	private Consumer<CallbackQuery> showException(TelegramApi telegram, ManagedTask<?> task) {
+	private Consumer<CallbackQuery> showException(TelegramApi telegram, ManagedTask task) {
 		return callback -> {
 			var message = callback.message().get();
 			var exception = task.lastRunException();
@@ -97,7 +97,7 @@ class TasksCommand extends Command {
 		};
 	}
 
-	private Consumer<CallbackQuery> scheduleOrCancel(TelegramApi telegram, ManagedTask<?> task) {
+	private Consumer<CallbackQuery> scheduleOrCancel(TelegramApi telegram, ManagedTask task) {
 		return callback -> {
 			var message = callback.message().get();
 			if (task.isScheduled()) {
@@ -116,7 +116,7 @@ class TasksCommand extends Command {
 		};
 	}
 
-	private InlineKeyboard newBackToStatusKeyboard(TelegramApi telegram, ManagedTask<?> task) {
+	private InlineKeyboard newBackToStatusKeyboard(TelegramApi telegram, ManagedTask task) {
 		return InlineKeyboard.newBuilder()
 				.addRow()
 				.addButton(messages.taskBackToStatus(), showStatus(telegram, task))

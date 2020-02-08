@@ -38,28 +38,28 @@ class Messages {
 		return bundle.getString("taskBackToStatus");
 	}
 
-	public String taskScheduled(ManagedTask<?> task) {
+	public String taskScheduled(ManagedTask task) {
 		var pattern = bundle.getString("taskScheduled");
 		return MessageFormat.format(pattern, task.alias());
 	}
 
-	public String taskCancelled(ManagedTask<?> task) {
+	public String taskCancelled(ManagedTask task) {
 		var pattern = bundle.getString("taskCancelled");
 		return MessageFormat.format(pattern, task.alias());
 	}
 
-	public String taskWithException(ManagedTask<?> task) {
+	public String taskWithException(ManagedTask task) {
 		var trace = Exceptions.stackTraceOf(task.lastRunException().get());
 		var pattern = bundle.getString("taskWithException");
 		return MessageFormat.format(pattern, task.alias(), trace);
 	}
 
-	public String taskWithoutException(ManagedTask<?> task) {
+	public String taskWithoutException(ManagedTask task) {
 		var pattern = bundle.getString("taskWithoutException");
 		return MessageFormat.format(pattern, task.alias());
 	}
 
-	public String taskStatus(ManagedTask<?> task) {
+	public String taskStatus(ManagedTask task) {
 		var pattern = bundle.getString("taskStatus");
 		return MessageFormat.format(pattern, task.alias(),
 				taskIsScheduled(task),
@@ -75,7 +75,7 @@ class Messages {
 		return bundle.getString("showLastRunException");
 	}
 
-	private String taskIsScheduled(ManagedTask<?> task) {
+	private String taskIsScheduled(ManagedTask task) {
 		var period = task.runPeriod();
 		if (period.isEmpty()) {
 			return bundle.getString("taskIsNotScheduled");
@@ -85,7 +85,7 @@ class Messages {
 		}
 	}
 
-	private String taskHasRunTimestamp(ManagedTask<?> task) {
+	private String taskHasRunTimestamp(ManagedTask task) {
 		var timestamp = task.lastRunTimestamp();
 		if (timestamp.isEmpty()) {
 			return bundle.getString("taskHasNoRunTimestamp");
@@ -95,7 +95,7 @@ class Messages {
 		}
 	}
 
-	private String taskHasRunException(ManagedTask<?> task) {
+	private String taskHasRunException(ManagedTask task) {
 		var exception = task.lastRunException();
 		if (exception.isEmpty()) {
 			return bundle.getString("taskHasNoException");

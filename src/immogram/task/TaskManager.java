@@ -11,7 +11,7 @@ import java.util.TimerTask;
 
 public class TaskManager {
 
-	private final List<ManagedTask<?>> tasks;
+	private final List<ManagedTask> tasks;
 	private final Timer timer;
 
 	public TaskManager() {
@@ -19,20 +19,20 @@ public class TaskManager {
 		this.timer = createTimer();
 	}
 
-	public <O> ManagedTask<O> register(String alias, Task<Void, O> task) {
-		var managed = new ManagedTask<>(alias, task);
+	public ManagedTask register(String alias, Task<Void, Void> task) {
+		var managed = new ManagedTask(alias, task);
 		this.tasks.add(managed);
 		return managed;
 	}
 
-	public List<ManagedTask<?>> listAll() {
+	public List<ManagedTask> listAll() {
 		return Collections.unmodifiableList(tasks);
 	}
 
 	private static Timer createTimer() {
 		var timer = new Timer();
 		var task = createTimerTask(() -> { });
-		timer.schedule(task, Integer.MAX_VALUE, Integer.MAX_VALUE);
+		timer.scheduleAtFixedRate(task, Integer.MAX_VALUE, Integer.MAX_VALUE);
 		return timer;
 	}
 
@@ -45,16 +45,16 @@ public class TaskManager {
 		};
 	}
 
-	public class ManagedTask<O> implements Task<Void, O> {
+	public class ManagedTask implements Task<Void, Void> {
 
 		private final String alias;
-		private final Task<Void, O> delegate;
+		private final Task<Void, Void> delegate;
 		private TimerTask task;
 		private Duration runPeriod;
 		private Instant lastRunTimestamp;
 		private Exception lastRunException;
 
-		public ManagedTask(String alias, Task<Void, O> delegate) {
+		public ManagedTask(String alias, Task<Void, Void> delegate) {
 			this.alias = alias;
 			this.delegate = delegate;
 		}
@@ -64,7 +64,7 @@ public class TaskManager {
 		}
 
 		@Override
-		public O execute(Void input) {
+		public Void execute(Void input) {
 			lastRunException = null;
 			lastRunTimestamp = Instant.now();
 
@@ -72,7 +72,7 @@ public class TaskManager {
 				return delegate.execute(null);
 			} catch (Exception e) {
 				lastRunException = e;
-				throw e;
+				return null;
 			}
 		}
 
