@@ -30,6 +30,14 @@ class Messages {
 		return bundle.getString("taskListing");
 	}
 
+	public String taskBackToListing() {
+		return bundle.getString("taskBackToListing");
+	}
+
+	public String taskBackToStatus() {
+		return bundle.getString("taskBackToStatus");
+	}
+
 	public String taskScheduled(ManagedTask<?> task) {
 		var pattern = bundle.getString("taskScheduled");
 		return MessageFormat.format(pattern, task.alias());
@@ -40,10 +48,10 @@ class Messages {
 		return MessageFormat.format(pattern, task.alias());
 	}
 
-	public String taskWithException(Exception exception) {
-		var trace = Exceptions.stackTraceOf(exception);
+	public String taskWithException(ManagedTask<?> task) {
+		var trace = Exceptions.stackTraceOf(task.lastRunException().get());
 		var pattern = bundle.getString("taskWithException");
-		return MessageFormat.format(pattern, trace);
+		return MessageFormat.format(pattern, task.alias(), trace);
 	}
 
 	public String taskWithoutException(ManagedTask<?> task) {

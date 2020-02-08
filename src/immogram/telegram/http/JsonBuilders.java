@@ -36,6 +36,11 @@ class JsonBuilders {
 				.add("text", message.text().get())
 				.add("parse_mode", "markdown");
 
+		var id = message.id();
+		if (id.isPresent()) {
+			json.add("message_id", id.get());
+		}
+
 		var keyboard = message.replyKeyboard();
 		if (keyboard.isPresent()) {
 			json.add("reply_markup", Json.createObjectBuilder()

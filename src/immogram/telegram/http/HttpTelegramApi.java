@@ -61,6 +61,19 @@ public class HttpTelegramApi implements TelegramApi {
 	}
 
 	@Override
+	public void editTextMessage(TextMessage message) {
+		var body = JsonBuilders.forTextMessage(message);
+		var uri = uriForMethod("editMessageText");
+
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.header("Content-Type", "application/json")
+				.POST(asJson(body));
+
+		execute(request);
+	}
+
+	@Override
 	public void answerCallbackQuery(CallbackQuery callback) {
 		var body = JsonBuilders.forCallbackQuery(callback);
 		var uri = uriForMethod("answerCallbackQuery");

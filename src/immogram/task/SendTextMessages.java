@@ -19,7 +19,7 @@ public class SendTextMessages implements Task<Collection<String>, Void> {
 	@Override
 	public Void execute(Collection<String> input) {
 		for (var text : input) {
-			var message = new TextMessage(chatId.get(), 0, text);
+			var message = new TextMessage(null, chatId.get(), 0, text);
 			telegram.sendTextMessage(message);
 		}
 		return null;

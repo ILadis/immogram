@@ -6,12 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class InlineKeyboard {
 
 	private InlineKeyboard() { }
 
-	private Map<UUID, Runnable> actions;
+	private Map<UUID, Consumer<CallbackQuery>> actions;
 	private List<List<Button>> buttons;
 
 	public List<List<Button>> buttons() {
@@ -26,7 +27,11 @@ public class InlineKeyboard {
 		}
 
 		var uuid = UUID.fromString(data.get());
-		return Optional.ofNullable(actions.get(uuid));
+		if (actions.containsKey(uuid)) {
+			return Optional.of(() -> actions.get(uuid).accept(callback));
+		}
+
+		return Optional.empty();
 	}
 
 	public static class Button {
@@ -66,7 +71,7 @@ public class InlineKeyboard {
 			return this;
 		}
 
-		public Builder addButton(String text, Runnable action) {
+		public Builder addButton(String text, Consumer<CallbackQuery> action) {
 			var data = UUID.randomUUID();
 			var button = new Button(text, data);
 			row.add(button);

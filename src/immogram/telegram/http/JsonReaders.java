@@ -41,11 +41,12 @@ class JsonReaders {
 	private static TextMessage toTextMessage(JsonObject object) {
 		var message = object.getJsonObject("message");
 
+		var id = message.getInt("message_id");
 		var chatId = message.getJsonObject("chat").getInt("id");
 		var userId = message.getJsonObject("from").getInt("id");
 		var text = message.getString("text", null);
 
-		return new TextMessage(chatId, userId, text);
+		return new TextMessage(id, chatId, userId, text);
 	}
 
 	private static CallbackQuery toCallbackQuery(JsonObject object) {
@@ -54,7 +55,11 @@ class JsonReaders {
 		var id = callback.getString("id");
 		var data = callback.getString("data", null);
 
-		return new CallbackQuery(id, data);
+		if (callback.containsKey("message")) {
+			return new CallbackQuery(id, data, toTextMessage(callback));
+		} else {
+			return new CallbackQuery(id, data, null);
+		}
 	}
 
 }

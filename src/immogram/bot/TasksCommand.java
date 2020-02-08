@@ -1,6 +1,7 @@
 package immogram.bot;
 
 import java.time.Duration;
+import java.util.function.Consumer;
 
 import immogram.task.TaskManager;
 import immogram.task.TaskManager.ManagedTask;
@@ -23,6 +24,14 @@ class TasksCommand extends Command {
 	}
 
 	@Override
+	protected void execute(TelegramApi telegram, TextMessage message) {
+		var text = messages.taskListing();
+		message = message.response(text, newListingKeyboard(telegram));
+		telegram.sendTextMessage(message);
+		keyboard = message.replyKeyboard().orElse(null);
+	}
+
+	@Override
 	public void handle(TelegramApi telegram, CallbackQuery callback) {
 		telegram.answerCallbackQuery(callback);
 		if (keyboard != null) {
@@ -30,64 +39,88 @@ class TasksCommand extends Command {
 		}
 	}
 
-	@Override
-	protected void execute(TelegramApi telegram, TextMessage message) {
-		keyboard = newTasksKeyboard(telegram, message);
-		var response = message.response(messages.taskListing(), keyboard);
-		telegram.sendTextMessage(response);
+	private Consumer<CallbackQuery> showListing(TelegramApi telegram) {
+		return callback -> {
+			var message = callback.message().get();
+			var text = messages.taskListing();
+			message = message.edit(text, newListingKeyboard(telegram));
+			telegram.editTextMessage(message);
+			keyboard = message.replyKeyboard().orElse(null);
+		};
 	}
 
-	private InlineKeyboard newTasksKeyboard(TelegramApi telegram, TextMessage message) {
+	private InlineKeyboard newListingKeyboard(TelegramApi telegram) {
 		var keyboard = InlineKeyboard.newBuilder();
 
 		for (var task : manager.listAll()) {
-			keyboard.addRow().addButton(task.alias(), showTaskStatus(telegram, message, task));
+			keyboard.addRow().addButton(task.alias(), showStatus(telegram, task));
 		}
 
 		return keyboard.build();
 	}
 
-	private Runnable showTaskStatus(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
-		return () -> {
-			keyboard = newStatusKeyboard(telegram, message, task);
-			var response = message.response(messages.taskStatus(task), keyboard);
-			telegram.sendTextMessage(response);
+	private Consumer<CallbackQuery> showStatus(TelegramApi telegram, ManagedTask<?> task) {
+		return callback -> {
+			var message = callback.message().get();
+			var text = messages.taskStatus(task);
+			message = message.edit(text, newStatusKeyboard(telegram, task));
+			telegram.editTextMessage(message);
+			keyboard = message.replyKeyboard().orElse(null);
 		};
 	}
 
-	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
+	private InlineKeyboard newStatusKeyboard(TelegramApi telegram, ManagedTask<?> task) {
 		return InlineKeyboard.newBuilder()
 				.addRow()
-				.addButton(messages.scheduleOrCancelTask(), scheduleOrCancelTask(telegram, message, task))
-				.addButton(messages.showLastRunException(), showTaskException(telegram, message, task))
+				.addButton(messages.scheduleOrCancelTask(), scheduleOrCancel(telegram, task))
+				.addButton(messages.showLastRunException(), showException(telegram, task))
+				.addRow()
+				.addButton(messages.taskBackToListing(), showListing(telegram))
 				.build();
 	}
 
-	private Runnable showTaskException(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
-		return () -> {
+	private Consumer<CallbackQuery> showException(TelegramApi telegram, ManagedTask<?> task) {
+		return callback -> {
+			var message = callback.message().get();
 			var exception = task.lastRunException();
 			if (exception.isPresent()) {
-				var response = message.response(messages.taskWithException(exception.get()));
-				telegram.sendTextMessage(response);
+				var text = messages.taskWithException(task);
+				var keyboard = newBackToStatusKeyboard(telegram, task);
+				message = message.edit(text, keyboard);
 			} else {
-				var response = message.response(messages.taskWithoutException(task));
-				telegram.sendTextMessage(response);
+				var text = messages.taskWithoutException(task);
+				var keyboard = newBackToStatusKeyboard(telegram, task);
+				message = message.edit(text, keyboard);
 			}
+			telegram.editTextMessage(message);
+			keyboard = message.replyKeyboard().orElse(null);
 		};
 	}
 
-	private Runnable scheduleOrCancelTask(TelegramApi telegram, TextMessage message, ManagedTask<?> task) {
-		return () -> {
+	private Consumer<CallbackQuery> scheduleOrCancel(TelegramApi telegram, ManagedTask<?> task) {
+		return callback -> {
+			var message = callback.message().get();
 			if (task.isScheduled()) {
 				task.cancel();
-				var response = message.response(messages.taskCancelled(task));
-				telegram.sendTextMessage(response);
+				var text = messages.taskCancelled(task);
+				var keyboard = newBackToStatusKeyboard(telegram, task);
+				message = message.edit(text, keyboard);
 			} else {
 				task.schedule(Duration.ofHours(3));
-				var response = message.response(messages.taskScheduled(task));
-				telegram.sendTextMessage(response);
+				var text = messages.taskScheduled(task);
+				var keyboard = newBackToStatusKeyboard(telegram, task);
+				message = message.edit(text, keyboard);
 			}
+			telegram.editTextMessage(message);
+			keyboard = message.replyKeyboard().orElse(null);
 		};
+	}
+
+	private InlineKeyboard newBackToStatusKeyboard(TelegramApi telegram, ManagedTask<?> task) {
+		return InlineKeyboard.newBuilder()
+				.addRow()
+				.addButton(messages.taskBackToStatus(), showStatus(telegram, task))
+				.build();
 	}
 
 }
