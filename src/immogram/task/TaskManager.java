@@ -11,12 +11,24 @@ import java.util.TimerTask;
 
 public class TaskManager {
 
+	private final List<ManagedTaskFactory> factories;
 	private final List<ManagedTask> tasks;
 	private final Timer timer;
 
 	public TaskManager() {
+		this.factories = new ArrayList<>();
 		this.tasks = new ArrayList<>();
 		this.timer = createTimer();
+	}
+
+	public ManagedTaskFactory register(String alias, TaskFactory<String, Void, Void> factory) {
+		var managed = new ManagedTaskFactory(alias, factory);
+		factories.add(managed);
+		return managed;
+	}
+
+	public List<ManagedTaskFactory> listFactories() {
+		return Collections.unmodifiableList(factories);
 	}
 
 	public ManagedTask register(String alias, Task<Void, Void> task) {
@@ -25,7 +37,7 @@ public class TaskManager {
 		return managed;
 	}
 
-	public List<ManagedTask> listAll() {
+	public List<ManagedTask> listTasks() {
 		return Collections.unmodifiableList(tasks);
 	}
 
@@ -45,6 +57,27 @@ public class TaskManager {
 		};
 	}
 
+	public class ManagedTaskFactory implements TaskFactory<String, Void, Void> {
+
+		private final String alias;
+		private final TaskFactory<String, Void, Void> delegate;
+
+		private ManagedTaskFactory(String alias, TaskFactory<String, Void, Void> delegate) {
+			this.alias = alias;
+			this.delegate = delegate;
+		}
+
+		public String alias() {
+			return alias;
+		}
+
+		@Override
+		public ManagedTask create(String term) {
+			var task = delegate.create(term);
+			return register(alias + " - " + term, task);
+		}
+	}
+
 	public class ManagedTask implements Task<Void, Void> {
 
 		private final String alias;
@@ -54,7 +87,7 @@ public class TaskManager {
 		private Instant lastRunTimestamp;
 		private Exception lastRunException;
 
-		public ManagedTask(String alias, Task<Void, Void> delegate) {
+		private ManagedTask(String alias, Task<Void, Void> delegate) {
 			this.alias = alias;
 			this.delegate = delegate;
 		}

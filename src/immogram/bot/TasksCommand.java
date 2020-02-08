@@ -40,7 +40,7 @@ class TasksCommand extends Command {
 
 	private InlineKeyboard newListingKeyboard(TelegramApi telegram) {
 		var keyboard = InlineKeyboard.newBuilder();
-		for (var task : manager.listAll()) {
+		for (var task : manager.listTasks()) {
 			keyboard.addRow().addButton(task.alias(), showStatus(telegram, task));
 		}
 		return keyboard.build();
