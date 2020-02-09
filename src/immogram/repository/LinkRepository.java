@@ -84,4 +84,19 @@ public class LinkRepository implements Repository<URI, Link> {
 		}
 	}
 
+	@Override
+	public void delete(Link link) {
+		try {
+			var stmt = conn.prepareStatement(""
+					+ "DELETE FROM links WHERE "
+					+ "href = ?");
+
+			stmt.setString(1, link.href().toString());
+
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			Exceptions.throwUnchecked(e);
+		}
+	}
+
 }
