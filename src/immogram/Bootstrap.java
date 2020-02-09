@@ -20,6 +20,7 @@ import immogram.telegram.http.HttpTelegramApi;
 import immogram.webdriver.WebDriver;
 import immogram.webdriver.http.HttpWebDriver;
 import immogram.webscraper.EbayWebScraper;
+import immogram.webscraper.ImmonetWebScraper;
 import immogram.webscraper.ImmoweltWebScraper;
 import immogram.webscraper.WebScraper;
 
@@ -55,6 +56,10 @@ public class Bootstrap {
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {
 		return term -> scraperTask(new ImmoweltWebScraper(term));
+	}
+
+	public TaskFactory<String, Void, Void> immonetScraperTask() {
+		return term -> scraperTask(new ImmonetWebScraper(term));
 	}
 
 	public TaskFactory<String, Void, Void> ebayScraperTask() {
