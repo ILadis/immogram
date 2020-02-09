@@ -67,7 +67,10 @@ class ObeyCommand extends Command {
 
 		@Override
 		public void handle(TelegramApi telegram, CallbackQuery callback) {
-			delegate.handle(telegram, callback);
+			var message = callback.message();
+			if (message.isPresent() && isFromObeyingChat(message.get())) {
+				delegate.handle(telegram, callback);
+			}
 		}
 	}
 
