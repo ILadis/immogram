@@ -9,6 +9,7 @@ import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.function.Function;
 
@@ -18,6 +19,7 @@ import immogram.Exceptions;
 import immogram.webdriver.By;
 import immogram.webdriver.Element;
 import immogram.webdriver.Session;
+import immogram.webdriver.Session.Id;
 import immogram.webdriver.WebDriver;
 
 public class HttpWebDriver implements WebDriver {
@@ -131,7 +133,7 @@ public class HttpWebDriver implements WebDriver {
 				.uri(uri)
 				.GET();
 
-		return execute(request, JsonReaders::forValue);
+		return execute(request, JsonReaders::forTextValue);
 	}
 
 	@Override
@@ -141,7 +143,7 @@ public class HttpWebDriver implements WebDriver {
 				.uri(uri)
 				.GET();
 
-		return execute(request, JsonReaders::forValue);
+		return execute(request, JsonReaders::forTextValue);
 	}
 
 	@Override
@@ -164,6 +166,17 @@ public class HttpWebDriver implements WebDriver {
 				.POST(asJson(body));
 
 		execute(request);
+	}
+
+	@Override
+	public ByteBuffer elementScreenshot(Id sessionId, immogram.webdriver.Element.Id elementId) {
+		var uri = root.resolve("/session/" + sessionId + "/element/" + elementId + "/screenshot");
+
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.GET();
+
+		return execute(request, JsonReaders::forBase64Value);
 	}
 
 	private static BodyPublisher emptyJson() {

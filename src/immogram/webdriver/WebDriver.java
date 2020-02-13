@@ -1,6 +1,7 @@
 package immogram.webdriver;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import immogram.webdriver.Session.Id;
@@ -23,4 +24,5 @@ public interface WebDriver {
 	String elementAttr(Session.Id sessionId, Element.Id elementId, String name);
 	void elementClick(Session.Id sessionId, Element.Id elementId);
 	void elementSendKeys(Session.Id sessionId, Element.Id elementId, String text);
+	ByteBuffer elementScreenshot(Session.Id sessionId, Element.Id elementId);
 }

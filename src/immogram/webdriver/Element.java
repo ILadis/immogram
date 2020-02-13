@@ -1,5 +1,6 @@
 package immogram.webdriver;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,5 +65,9 @@ public class Element {
 
 	public void sendKeys(String text) {
 		driver.elementSendKeys(sessionId, elementId, text);
+	}
+
+	public ByteBuffer takeScreenshot() {
+		return driver.elementScreenshot(sessionId, elementId);
 	}
 }

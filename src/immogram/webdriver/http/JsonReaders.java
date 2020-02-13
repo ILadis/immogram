@@ -1,6 +1,8 @@
 package immogram.webdriver.http;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.List;
 
 import javax.json.Json;
@@ -58,13 +60,25 @@ class JsonReaders {
 		return values.getValuesAs(JsonReaders::toElementId);
 	}
 
-	static String forValue(InputStream in) {
+	static String forTextValue(InputStream in) {
 		var reader = Json.createReader(in);
 
 		var value = reader.readObject()
 				.getString("value");
 
 		return value;
+	}
+
+	static ByteBuffer forBase64Value(InputStream in) {
+		var reader = Json.createReader(in);
+		var decoder = Base64.getDecoder();
+
+		var value = reader.readObject()
+				.getString("value");
+
+		var raw = decoder.decode(value);
+
+		return ByteBuffer.wrap(raw);
 	}
 
 }
