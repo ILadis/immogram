@@ -34,8 +34,8 @@ public class SaveAndFilter<I, E> implements Task<Collection<E>, Collection<E>> {
 		return output;
 	}
 
-	private void rollback(Collection<E> input) {
-		for (var entity : input) {
+	private void rollback(Collection<E> entities) {
+		for (var entity : entities) {
 			repo.delete(entity);
 		}
 	}
@@ -43,11 +43,11 @@ public class SaveAndFilter<I, E> implements Task<Collection<E>, Collection<E>> {
 	@Override
 	public <R> Task<Collection<E>, R> pipe(Task<Collection<E>, R> next) {
 		return (input) -> {
-			var entities = execute(input);
+			var output = execute(input);
 			try {
-				return next.execute(entities);
+				return next.execute(output);
 			} catch (Exception e) {
-				rollback(entities);
+				rollback(output);
 				throw e;
 			}
 		};
