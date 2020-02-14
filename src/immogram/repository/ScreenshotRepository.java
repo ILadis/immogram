@@ -1,17 +1,18 @@
 package immogram.repository;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
 import immogram.Exceptions;
-import immogram.Link;
+import immogram.Screenshot;
 
-public class LinkRepository implements Repository<URI, Link> {
+public class ScreenshotRepository implements Repository<URI, Screenshot> {
 
-	public static LinkRepository openNew(Connection conn) {
-		var repo = new LinkRepository(conn);
+	public static ScreenshotRepository openNew(Connection conn) {
+		var repo = new ScreenshotRepository(conn);
 		repo.createTables();
 
 		return repo;
@@ -19,7 +20,7 @@ public class LinkRepository implements Repository<URI, Link> {
 
 	private final Connection conn;
 
-	private LinkRepository(Connection conn) {
+	private ScreenshotRepository(Connection conn) {
 		this.conn = conn;
 	}
 
@@ -27,13 +28,13 @@ public class LinkRepository implements Repository<URI, Link> {
 		try {
 			var stmt = conn.createStatement();
 			stmt.addBatch(""
-					+ "CREATE TABLE IF NOT EXISTS links ("
+					+ "CREATE TABLE IF NOT EXISTS screenshots ("
 					+ "  href VARCHAR(1024),"
-					+ "  title VARCHAR(512)"
+					+ "  bitmap BINARY(2097152)"
 					+ ")");
 			stmt.addBatch(""
-					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_links "
-					+ "ON links (href)");
+					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_screenshots "
+					+ "ON screenshots (href)");
 			stmt.executeBatch();
 		} catch (SQLException e) {
 			Exceptions.throwUnchecked(e);
@@ -41,11 +42,11 @@ public class LinkRepository implements Repository<URI, Link> {
 	}
 
 	@Override
-	public Optional<Link> findBy(URI href) {
+	public Optional<Screenshot> findBy(URI href) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT title "
-					+ "FROM links WHERE href = ?");
+					+ "SELECT bitmap "
+					+ "FROM screenshots WHERE href = ?");
 
 			stmt.setString(1, href.toString());
 
@@ -54,29 +55,31 @@ public class LinkRepository implements Repository<URI, Link> {
 				return Optional.empty();
 			}
 
-			var link = Link.newBuilder()
-					.title(result.getString(1))
+			var bitmap = ByteBuffer.wrap(result.getBytes(1));
+
+			var screenshot = Screenshot.newBuilder()
 					.href(href)
+					.bitmap(bitmap)
 					.build();
 
-			return Optional.of(link);
+			return Optional.of(screenshot);
 		} catch (SQLException e) {
 			return Exceptions.throwUnchecked(e);
 		}
 	}
 
 	@Override
-	public void save(Link link) {
+	public void save(Screenshot screenshot) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "MERGE INTO links ("
-					+ "  title, href"
+					+ "MERGE INTO screenshots ("
+					+ "  href, bitmap"
 					+ ") KEY (href) VALUES ("
 					+ "  ?, ?"
 					+ ")");
 
-			stmt.setString(1, link.title());
-			stmt.setString(2, link.href().toString());
+			stmt.setString(1, screenshot.href().toString());
+			stmt.setBytes(2, screenshot.bitmap().array());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {
@@ -85,13 +88,13 @@ public class LinkRepository implements Repository<URI, Link> {
 	}
 
 	@Override
-	public void delete(Link link) {
+	public void delete(Screenshot screenshot) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "DELETE FROM links WHERE "
+					+ "DELETE FROM screenshots WHERE "
 					+ "href = ?");
 
-			stmt.setString(1, link.href().toString());
+			stmt.setString(1, screenshot.href().toString());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {
