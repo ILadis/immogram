@@ -10,7 +10,7 @@ import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
 
-public class EbayWebScraper implements WebScraper<Link> {
+public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
 	private final String city;

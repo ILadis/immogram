@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.sql.DriverManager;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Locale;
 
 import immogram.bot.ImmogramBot;
@@ -66,7 +67,7 @@ public class Bootstrap {
 		return term -> scraperTask(new EbayWebScraper(term));
 	}
 
-	private Task<Void, Void> scraperTask(WebScraper<Link> scraper) {
+	private Task<Void, Void> scraperTask(WebScraper<Collection<Link>> scraper) {
 		return new Retry<>(5, Duration.ofMillis(100), new ScrapeWeb<>(webDriver(), scraper))
 				.pipe(new SaveAndFilter<>(linkRepository(), Link::href))
 				.pipe(new LinkToText())

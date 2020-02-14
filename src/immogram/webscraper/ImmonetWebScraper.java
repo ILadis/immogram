@@ -13,7 +13,7 @@ import immogram.webdriver.Element;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
 
-public class ImmonetWebScraper implements WebScraper<Link> {
+public class ImmonetWebScraper implements WebScraper<Collection<Link>> {
 
 	private final String city;
 	private final URI index;

@@ -1,11 +1,9 @@
 package immogram.task;
 
-import java.util.Collection;
-
 import immogram.webdriver.WebDriver;
 import immogram.webscraper.WebScraper;
 
-public class ScrapeWeb<E> implements Task<Void, Collection<E>> {
+public class ScrapeWeb<E> implements Task<Void, E> {
 
 	private final WebDriver driver;
 	private final WebScraper<E> scraper;
@@ -16,7 +14,7 @@ public class ScrapeWeb<E> implements Task<Void, Collection<E>> {
 	}
 
 	@Override
-	public Collection<E> execute(Void input) {
+	public E execute(Void input) {
 		return scraper.execute(driver);
 	}
 }

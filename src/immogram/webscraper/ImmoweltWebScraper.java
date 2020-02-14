@@ -13,7 +13,7 @@ import immogram.webdriver.WebDriver;
 import immogram.webscraper.utils.Timer;
 import immogram.webscraper.utils.Watcher;
 
-public class ImmoweltWebScraper implements WebScraper<Link> {
+public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
 	private final String city;
