@@ -2,6 +2,7 @@ package immogram;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.Collection;
@@ -9,9 +10,11 @@ import java.util.Locale;
 
 import immogram.bot.ImmogramBot;
 import immogram.repository.LinkRepository;
+import immogram.repository.ScreenshotRepository;
 import immogram.task.LinkToText;
 import immogram.task.Retry;
 import immogram.task.SaveAndFilter;
+import immogram.task.SaveScreenshot;
 import immogram.task.ScrapeWeb;
 import immogram.task.SendTextMessages;
 import immogram.task.Task;
@@ -23,6 +26,7 @@ import immogram.webdriver.http.HttpWebDriver;
 import immogram.webscraper.EbayWebScraper;
 import immogram.webscraper.ImmonetWebScraper;
 import immogram.webscraper.ImmoweltWebScraper;
+import immogram.webscraper.ScreenshotWebScraper;
 import immogram.webscraper.WebScraper;
 
 public class Bootstrap {
@@ -30,14 +34,26 @@ public class Bootstrap {
 	private Bootstrap() { }
 
 	private Locale messagesLocale;
+	private Connection sqlConnection;
 	private LinkRepository linkRepository;
+	private ScreenshotRepository screenshotRepository;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
 	private ImmogramBot immogramBot;
 	private HttpClient httpClient;
 
 	public LinkRepository linkRepository() {
+		if (linkRepository == null) {
+			linkRepository = LinkRepository.openNew(sqlConnection);
+		}
 		return linkRepository;
+	}
+
+	public ScreenshotRepository screenshotRepository() {
+		if (screenshotRepository == null) {
+			screenshotRepository = ScreenshotRepository.openNew(sqlConnection);
+		}
+		return screenshotRepository;
 	}
 
 	public WebDriver webDriver() {
@@ -68,8 +84,10 @@ public class Bootstrap {
 	}
 
 	private Task<Void, Void> scraperTask(WebScraper<Collection<Link>> scraper) {
-		return new Retry<>(5, Duration.ofMillis(100), new ScrapeWeb<>(webDriver(), scraper))
+		return new Retry<>(5, Duration.ofMillis(100),
+				      new ScrapeWeb<>(webDriver(), scraper))
 				.pipe(new SaveAndFilter<>(linkRepository(), Link::href))
+				.pipe(new SaveScreenshot<>(screenshotRepository(), webDriver(), ScreenshotWebScraper::new, Link::href))
 				.pipe(new LinkToText())
 				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
 	}
@@ -96,8 +114,7 @@ public class Bootstrap {
 		}
 
 		public Builder jdbcUrl(String url) throws Throwable {
-			var conn = DriverManager.getConnection(url);
-			linkRepository = LinkRepository.openNew(conn);
+			sqlConnection = DriverManager.getConnection(url);
 			return this;
 		}
 
