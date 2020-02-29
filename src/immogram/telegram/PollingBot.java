@@ -5,6 +5,8 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import immogram.Exceptions;
+
 public class PollingBot {
 
 	private final TelegramApi telegram;
@@ -54,8 +56,10 @@ public class PollingBot {
 			var method = cls.getMethod("handle", TelegramApi.class, message);
 			method.invoke(handler, telegram, update.message());
 			return true;
-		} catch (ReflectiveOperationException e) {
+		} catch (NoSuchMethodException e) {
 			return false;
+		} catch (ReflectiveOperationException e) {
+			return Exceptions.throwUnchecked(e);
 		}
 	}
 
