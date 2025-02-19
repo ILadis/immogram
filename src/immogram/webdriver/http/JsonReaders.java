@@ -10,6 +10,7 @@ import javax.json.JsonObject;
 
 import immogram.webdriver.Element;
 import immogram.webdriver.Session;
+import immogram.webdriver.ShadowRoot;
 
 class JsonReaders {
 
@@ -58,6 +59,22 @@ class JsonReaders {
 				.getJsonArray("value");
 
 		return values.getValuesAs(JsonReaders::toElementId);
+	}
+
+	static ShadowRoot.Id forShadowRootId(InputStream in) {
+		var reader = Json.createReader(in);
+
+		var value = reader.readObject()
+				.getJsonObject("value");
+
+		return toShadowRootId(value);
+	}
+
+	private static ShadowRoot.Id toShadowRootId(JsonObject object) {
+		var key = object.keySet().iterator().next();
+		var value = object.getString(key);
+
+		return new ShadowRoot.Id(value);
 	}
 
 	static String forTextValue(InputStream in) {

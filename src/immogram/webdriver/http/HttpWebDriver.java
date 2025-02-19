@@ -10,7 +10,9 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.json.JsonStructure;
@@ -20,22 +22,34 @@ import immogram.webdriver.By;
 import immogram.webdriver.Element;
 import immogram.webdriver.Session;
 import immogram.webdriver.Session.Id;
+import immogram.webdriver.ShadowRoot;
 import immogram.webdriver.WebDriver;
 
+// For available web driver endpoints see:
+// https://w3c.github.io/webdriver/#endpoints
 public class HttpWebDriver implements WebDriver {
 
 	private final HttpClient client;
 	private final URI root;
+	private final Set<String> capabilities = new HashSet<>();
 
 	public HttpWebDriver(HttpClient client, URI root) {
+		this(client, root, true);
+	}
+
+	public HttpWebDriver(HttpClient client, URI root, boolean headless) {
 		this.client = client;
 		this.root = root;
+
+		if (headless) {
+			capabilities.add("-headless");
+		}
 	}
 
 	@Override
 	public Session.Id newSession() {
 		var uri = root.resolve("/session");
-		var body = JsonBuilders.forCapabilitiesArgs("-headless");
+		var body = JsonBuilders.forCapabilitiesArgs(capabilities.toArray(String[]::new));
 
 		var request = HttpRequest.newBuilder()
 				.uri(uri)
@@ -127,6 +141,40 @@ public class HttpWebDriver implements WebDriver {
 	}
 
 	@Override
+	public ShadowRoot.Id elementShadowRoot(Session.Id sessionId, Element.Id elementId) {
+		var uri = root.resolve("/session/" + sessionId + "/element/" + elementId + "/shadow");
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.GET();
+
+		return execute(request, JsonReaders::forShadowRootId);
+	}
+
+	@Override
+	public Element.Id findElementFromShadowRoot(Id sessionId, ShadowRoot.Id shadowId, By selector) {
+		var uri = root.resolve("/session/" + sessionId + "/shadow/" + shadowId + "/element");
+		var body = JsonBuilders.forSelector(selector);
+
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.POST(asJson(body));
+
+		return execute(request, JsonReaders::forElementId);
+	}
+
+	@Override
+	public List<Element.Id> findElementsFromShadowRoot(Id sessionId, ShadowRoot.Id shadowId, By selector) {
+		var uri = root.resolve("/session/" + sessionId + "/shadow/" + shadowId + "/elements");
+		var body = JsonBuilders.forSelector(selector);
+
+		var request = HttpRequest.newBuilder()
+				.uri(uri)
+				.POST(asJson(body));
+
+		return execute(request, JsonReaders::forElementIds);
+	}
+
+	@Override
 	public String elementText(Session.Id sessionId, Element.Id elementId) {
 		var uri = root.resolve("/session/" + sessionId + "/element/" + elementId + "/text");
 		var request = HttpRequest.newBuilder()
@@ -188,7 +236,7 @@ public class HttpWebDriver implements WebDriver {
 	}
 
 	private <T> T execute(HttpRequest.Builder request) {
-		return execute(request, (in) -> null);
+		return execute(request, (_) -> null);
 	}
 
 	private <T> T execute(HttpRequest.Builder request, Function<InputStream, T> reader) {

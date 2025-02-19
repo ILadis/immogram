@@ -9,6 +9,7 @@ import immogram.Link;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
+import immogram.webscraper.utils.Retry;
 
 public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
@@ -17,7 +18,7 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 	public EbayWebScraper(String city) {
 		this.city = city;
-		this.index = URI.create("https://www.ebay-kleinanzeigen.de");
+		this.index = URI.create("https://www.kleinanzeigen.de");
 	}
 
 	@Override
@@ -25,6 +26,7 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 		try (var session = Session.createNew(driver)) {
 			session.navigateTo(index.resolve("/s-wohnung-mieten/c203"));
 
+			closeOverlays(session);
 			submitSearch(session, city);
 
 			var links = new LinkedHashSet<Link>();
@@ -34,6 +36,22 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 			return links;
 		}
+	}
+
+	private void closeOverlays(Session session) {
+		Retry.suppress(8, () -> {
+			var banner = session.findElement(By.cssSelector("#consentBanner"));
+
+			var deny = banner.findElement(By.cssSelector("[data-testid=gdpr-banner-decline]"));
+			deny.click();
+		});
+
+		Retry.suppress(3, () -> {
+			var overlay = session.findElement(By.cssSelector(".login-overlay:not(.is-hidden)"));
+
+			var close = overlay.findElement(By.cssSelector(".overlay-close"));
+			close.click();
+		});
 	}
 
 	private void submitSearch(Session session, String city) {

@@ -10,8 +10,6 @@ import immogram.Link;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
-import immogram.webscraper.utils.Timer;
-import immogram.webscraper.utils.Watcher;
 
 public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 
@@ -26,10 +24,10 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 	@Override
 	public Collection<Link> execute(WebDriver driver) {
 		try (var session = Session.createNew(driver)) {
-			session.navigateTo(index.resolve("/suche/wohnungen/mieten"));
+			session.navigateTo(index);
 
+			closeOverlays(session);
 			submitSearch(session, city);
-			adjustDistance(session);
 
 			var links = new LinkedHashSet<Link>();
 			do {
@@ -40,53 +38,50 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 		}
 	}
 
-	private void submitSearch(Session session, String city) {
-		var input = session.findElement(By.cssSelector("#tbLocationInput"));
-		input.sendKeys(city);
+	private void closeOverlays(Session session) {
+		try {
+			var dialog = session.findElement(By.cssSelector("#usercentrics-root"));
+			var root = dialog.shadowRoot();
 
-		var submit = session.findElement(By.cssSelector("#btnSearchSubmit"));
-		submit.click();
+			var customize = root.waitForElement(By.cssSelector("[data-testid^=uc-customize]"), Duration.ofSeconds(8));
+			customize.click();
+
+			var deny = root.waitForElement(By.cssSelector("[data-testid^=uc-deny]"), Duration.ofSeconds(3));
+			deny.click();
+		} catch (Exception e) {
+			// nothing to reject
+		}
 	}
 
-	private void adjustDistance(Session session) {
-		var dropdown = session.waitForElement(By.cssSelector(".umkreis"), Duration.ofSeconds(5));
-		dropdown.click();
+	private void submitSearch(Session session, String city) {
+		try {
+			var button = session.findElement(By.cssSelector("[data-testid=wlhp-hero] button"));
+			button.click();
+		} catch (Exception e) {
+			// no need to reset search
+		}
 
-		var item = session.findElement(By.cssSelector("input[name='SearchRange'][value='0']"));
-		item.click();
+		var tab = session.findElement(By.cssSelector("[data-key=RENT]"));
+		tab.click();
 
-		var submit = session.findElement(By.cssSelector("#btnSearch"));
-		submit.click();
+		var input = session.findElement(By.cssSelector("[data-testid=refiner-form-test-id] input"));
+		input.sendKeys(city);
+
+		var option = session.waitForElement(By.cssSelector("[aria-label=Empfehlungen] li"), Duration.ofSeconds(3));
+		option.click();
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
-		var watcher = Watcher.watch(links);
-		var unchanged = 0;
-
-		var duration = Duration.ofSeconds(3);
-
-		do {
-			if (!Timer.sleepFor(duration)) break;
-
-			addApartmentsCurrentlyOnPage(session, links);
-			scrollToBottom(session);
-
-			if (watcher.hasChanged()) unchanged = 0;
-			else unchanged++;
-		} while(unchanged < 3);
-	}
-
-	private void addApartmentsCurrentlyOnPage(Session session, Set<Link> links) {
-		var elements = session.findElements(By.cssSelector(".listitem_wrap"));
+		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core] a"));
 
 		for (var element : elements) {
-			var id = element.attr("data-oid");
-			var href = index.resolve("/expose/" + id);
+			var title = element.attr("title");
 
-			var title = element.findElement(By.cssSelector("h2"));
+			var path = URI.create(element.attr("href")).getPath();
+			var href = index.resolve(path);
 
 			var link = Link.newBuilder()
-					.title(title.text())
+					.title(title)
 					.href(href)
 					.build();
 
@@ -94,17 +89,9 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 		}
 	}
 
-	private void scrollToBottom(Session session) {
-		session.executeScript(""
-				+ "var elements = Array.from(document.querySelectorAll('.listcontent h2'));"
-				+ "if (elements.length) {"
-				+ "  elements.pop().scrollIntoView({behavior: 'smooth', block: 'end'});"
-				+ "}");
-	}
-
 	private boolean gotoNextPage(Session session) {
 		try {
-			var next = session.findElement(By.cssSelector("#nlbPlus"));
+			var next = session.findElement(By.cssSelector("[aria-label^=nächste]"));
 			next.click();
 			return true;
 		} catch (Exception e) {

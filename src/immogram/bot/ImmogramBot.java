@@ -14,10 +14,10 @@ public class ImmogramBot extends PollingBot {
 	private final TaskManager taskManager;
 	private final ObeyCommand obeyCommand;
 
-	public ImmogramBot(TelegramApi telegram, Locale locale) {
+	public ImmogramBot(TelegramApi telegram, TaskManager taskManager, Locale locale) {
 		super(telegram);
 		this.messages = new Messages(locale);
-		this.taskManager = new TaskManager();
+		this.taskManager = taskManager;
 		this.obeyCommand = new ObeyCommand(messages);
 		registerCommands();
 	}
@@ -29,10 +29,6 @@ public class ImmogramBot extends PollingBot {
 				obeyCommand.wrap(new DeleteTaskCommand(messages, taskManager)),
 				obeyCommand.wrap(new PingCommand()),
 				obeyCommand.wrap(new PongCommand()));
-	}
-
-	public TaskManager taskManager() {
-		return taskManager;
 	}
 
 	public Supplier<Integer> obeyingChat() {

@@ -29,19 +29,17 @@ def bootstrap = builder()
 		.telegramApiTokenAndEndpoint(props['BOT_TOKEN'], 'https://api.telegram.org')
 		.build()
 
-def bot = bootstrap.immogramBot()
-def manager = bot.taskManager()
+def manager = bootstrap.taskManager()
 
 def immowelt = manager.register("Immowelt", bootstrap.immoweltScraperTask())
-def immonet = manager.register("Immonet", bootstrap.immonetScraperTask())
 def ebay = manager.register("Ebay", bootstrap.ebayScraperTask())
 
 immowelt.create("91413 Neustadt an der Aisch")
 immowelt.create("97346 Iphofen")
-immonet.create("97346 Iphofen")
 ebay.create("91413 Neustadt an der Aisch")
 ebay.create("97346 Iphofen")
 
+def bot = bootstrap.immogramBot()
 def timeout = Duration.ofSeconds(30)
 
 while (true) {

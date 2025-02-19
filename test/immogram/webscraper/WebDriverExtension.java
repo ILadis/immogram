@@ -33,7 +33,7 @@ class WebDriverExtension extends TypeBasedParameterResolver<WebDriver> implement
 	@Override
 	public WebDriver resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
 			throws ParameterResolutionException {
-		return new HttpWebDriver(client, uri);
+		return new HttpWebDriver(client, uri, false);
 	}
 
 	@Override

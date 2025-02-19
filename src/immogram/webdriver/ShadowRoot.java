@@ -1,10 +1,9 @@
 package immogram.webdriver;
 
-import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Session implements WaitForElement, AutoCloseable {
+public class ShadowRoot implements WaitForElement {
 
 	public static class Id {
 		private String value;
@@ -21,32 +20,21 @@ public class Session implements WaitForElement, AutoCloseable {
 
 	private final WebDriver driver;
 	private final Session.Id sessionId;
+	private final ShadowRoot.Id shadowId;
 
-	public static Session createNew(WebDriver driver) {
-		var sessionId = driver.newSession();
-		return new Session(driver, sessionId);
-	}
-
-	private Session(WebDriver driver, Session.Id id) {
+	protected ShadowRoot(WebDriver driver, Session.Id sessionId, ShadowRoot.Id shadowId) {
 		this.driver = driver;
-		this.sessionId = id;
+		this.sessionId = sessionId;
+		this.shadowId = shadowId;
 	}
 
-	public Session.Id id() {
-		return sessionId;
-	}
-
-	public void navigateTo(URI url) {
-		driver.navigateTo(sessionId, url);
-	}
-
-	public void executeScript(String script) {
-		driver.executeScript(sessionId, script);
+	public ShadowRoot.Id id() {
+		return shadowId;
 	}
 
 	@Override
 	public Element findElement(By selector) {
-		return toElement(driver.findElement(sessionId, selector));
+		return toElement(driver.findElementFromShadowRoot(sessionId, shadowId, selector));
 	}
 
 	private Element toElement(Element.Id elementId) {
@@ -54,17 +42,12 @@ public class Session implements WaitForElement, AutoCloseable {
 	}
 
 	public List<Element> findElements(By selector) {
-		return toElements(driver.findElements(sessionId, selector));
+		return toElements(driver.findElementsFromShadowRoot(sessionId, shadowId, selector));
 	}
 
 	private List<Element> toElements(List<Element.Id> elementIds) {
 		return elementIds.stream()
 				.map(elementId -> toElement(elementId))
 				.collect(Collectors.toList());
-	}
-
-	@Override
-	public void close() {
-		driver.closeSession(sessionId);
 	}
 }

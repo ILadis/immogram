@@ -19,12 +19,12 @@ import immogram.task.ScrapeWeb;
 import immogram.task.SendTextMessages;
 import immogram.task.Task;
 import immogram.task.TaskFactory;
+import immogram.task.TaskManager;
 import immogram.telegram.TelegramApi;
 import immogram.telegram.http.HttpTelegramApi;
 import immogram.webdriver.WebDriver;
 import immogram.webdriver.http.HttpWebDriver;
 import immogram.webscraper.EbayWebScraper;
-import immogram.webscraper.ImmonetWebScraper;
 import immogram.webscraper.ImmoweltWebScraper;
 import immogram.webscraper.ScreenshotWebScraper;
 import immogram.webscraper.WebScraper;
@@ -37,6 +37,7 @@ public class Bootstrap {
 	private Connection sqlConnection;
 	private LinkRepository linkRepository;
 	private ScreenshotRepository screenshotRepository;
+	private TaskManager taskManager;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
 	private ImmogramBot immogramBot;
@@ -56,6 +57,13 @@ public class Bootstrap {
 		return screenshotRepository;
 	}
 
+	public TaskManager taskManager() {
+		if (taskManager == null) {
+			taskManager = new TaskManager();
+		}
+		return taskManager;
+	}
+
 	public WebDriver webDriver() {
 		return webDriver;
 	}
@@ -66,17 +74,13 @@ public class Bootstrap {
 
 	public ImmogramBot immogramBot() {
 		if (immogramBot == null) {
-			immogramBot = new ImmogramBot(telegramApi, messagesLocale);
+			immogramBot = new ImmogramBot(telegramApi, taskManager(), messagesLocale);
 		}
 		return immogramBot;
 	}
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {
 		return term -> scraperTask(new ImmoweltWebScraper(term));
-	}
-
-	public TaskFactory<String, Void, Void> immonetScraperTask() {
-		return term -> scraperTask(new ImmonetWebScraper(term));
 	}
 
 	public TaskFactory<String, Void, Void> ebayScraperTask() {

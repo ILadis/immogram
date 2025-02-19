@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Element {
+public class Element implements WaitForElement {
 
 	public static class Id {
 		private String value;
@@ -19,11 +19,11 @@ public class Element {
 		}
 	}
 
-	final WebDriver driver;
-	final Session.Id sessionId;
-	final Element.Id elementId;
+	private final WebDriver driver;
+	private final Session.Id sessionId;
+	private final Element.Id elementId;
 
-	Element(WebDriver driver, Session.Id sessionId, Element.Id elementId) {
+	protected Element(WebDriver driver, Session.Id sessionId, Element.Id elementId) {
 		this.driver = driver;
 		this.sessionId = sessionId;
 		this.elementId = elementId;
@@ -33,6 +33,15 @@ public class Element {
 		return elementId;
 	}
 
+	public ShadowRoot shadowRoot() {
+		return toShadowRoot(driver.elementShadowRoot(sessionId, elementId));
+	}
+
+	private ShadowRoot toShadowRoot(ShadowRoot.Id shadowId) {
+		return new ShadowRoot(driver, sessionId, shadowId);
+	}
+
+	@Override
 	public Element findElement(By selector) {
 		return toElement(driver.findElementFromElement(sessionId, elementId, selector));
 	}

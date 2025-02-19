@@ -95,7 +95,7 @@ public class HttpTelegramApi implements TelegramApi {
 	}
 
 	private <T> T execute(HttpRequest.Builder request) {
-		return execute(request, (in) -> null);
+		return execute(request, (_) -> null);
 	}
 
 	private <T> T execute(HttpRequest.Builder request, Function<InputStream, T> reader) {
