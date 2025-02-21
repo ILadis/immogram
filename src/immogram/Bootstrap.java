@@ -27,6 +27,7 @@ import immogram.telegram.http.HttpTelegramApi;
 import immogram.webdriver.WebDriver;
 import immogram.webdriver.http.HttpWebDriver;
 import immogram.webscraper.EbayWebScraper;
+import immogram.webscraper.ImmoscoutWebScraper;
 import immogram.webscraper.ImmoweltWebScraper;
 import immogram.webscraper.ScreenshotWebScraper;
 import immogram.webscraper.WebScraper;
@@ -87,6 +88,16 @@ public class Bootstrap {
 			immogramBot = new ImmogramBot(telegramApi, taskManager(), messagesLocale);
 		}
 		return immogramBot;
+	}
+
+	public TaskFactory<String, Void, Void> immoscoutScraperTask() {
+		return term -> scraperTask(new ImmoscoutWebScraper(term)).pipe(_ -> null);
+	}
+
+	public TaskFactory<String, Void, Void> immoscoutBotScraperTask() {
+		return term -> scraperTask(new ImmoscoutWebScraper(term))
+				.pipe(new LinkToText())
+				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
 	}
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {

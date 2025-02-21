@@ -12,28 +12,26 @@ import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
 
-public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
+public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
 	private final String city;
 
-	public ImmoweltWebScraper(String city) {
+	public ImmoscoutWebScraper(String city) {
 		this.city = city;
-		this.index = URI.create("https://www.immowelt.de");
+		this.index = URI.create("https://www.immobilienscout24.de");
 	}
 
 	@Override
 	public Collection<Link> execute(WebDriver driver) {
 		try (var session = Session.createNew(driver)) {
-			session.navigateTo(index);
+			session.navigateTo(index.resolve("/wohnen/mietwohnungen.html"));
 
 			closeOverlays(session);
 			submitSearch(session, city);
 
 			var links = new LinkedHashSet<Link>();
-			do {
-				addAllApartmentsOnPage(session, links);
-			} while (gotoNextPage(session));
+			addAllApartmentsOnPage(session, links);
 
 			return links;
 		}
@@ -55,28 +53,27 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 	}
 
 	private void submitSearch(Session session, String city) {
-		try {
-			var button = session.findElement(By.cssSelector("[data-testid=wlhp-hero] button"));
-			button.click();
-		} catch (Exception e) {
-			// no need to reset search
-		}
-
-		var tab = session.findElement(By.cssSelector("[data-key=RENT]"));
-		tab.click();
-
-		var input = session.findElement(By.cssSelector("[data-testid=refiner-form-test-id] input"));
+		var input = session.findElement(By.cssSelector(".oss-location"));
 		input.sendKeys(city);
 
-		var option = session.waitForElement(By.cssSelector("[aria-label=Empfehlungen] li"), Duration.ofSeconds(8));
+		var option = session.waitForElement(By.cssSelector(".ui-autocomplete .ui-menu-item"), Duration.ofSeconds(8));
 		option.click();
+
+		var select = session.findElement(By.cssSelector(".oss-radius"));
+		select.click();
+
+		var item = session.findElement(By.cssSelector(".oss-radius-menu [data-value=Km5]"));
+		item.click();
+
+		var button = session.findElement(By.cssSelector(".oss-submit-search"));
+		button.click();
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
-		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core] a"));
+		var elements = session.findElements(By.cssSelector(".result-list-entry__brand-title-container[data-exp-referrer=RESULT_LIST_LISTING]"));
 
 		for (var element : elements) {
-			var title = element.attr("title");
+			var title = element.text();
 
 			var path = URI.create(element.attr("href")).getPath();
 			var href = index.resolve(path);
@@ -88,16 +85,6 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 					.build();
 
 			links.add(link);
-		}
-	}
-
-	private boolean gotoNextPage(Session session) {
-		try {
-			var next = session.findElement(By.cssSelector("[aria-label^=nächste]"));
-			next.click();
-			return true;
-		} catch (Exception e) {
-			return false;
 		}
 	}
 }

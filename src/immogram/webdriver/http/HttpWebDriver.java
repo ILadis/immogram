@@ -10,9 +10,8 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import javax.json.JsonStructure;
@@ -25,13 +24,17 @@ import immogram.webdriver.Session.Id;
 import immogram.webdriver.ShadowRoot;
 import immogram.webdriver.WebDriver;
 
-// For available web driver endpoints see:
-// https://w3c.github.io/webdriver/#endpoints
+/* For available web driver endpoints see:
+ *   https://w3c.github.io/webdriver/#endpoints
+ *
+ * See geckodriver for firefox specific implementation details:
+ *   https://firefox-source-docs.mozilla.org/testing/geckodriver/index.html
+ */
 public class HttpWebDriver implements WebDriver {
 
 	private final HttpClient client;
 	private final URI root;
-	private final Set<String> capabilities = new HashSet<>();
+	private final List<String> capabilities = new LinkedList<>();
 
 	public HttpWebDriver(HttpClient client, URI root) {
 		this(client, root, true);

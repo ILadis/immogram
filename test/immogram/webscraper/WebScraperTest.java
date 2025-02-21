@@ -14,7 +14,7 @@ import immogram.webscraper.WebScraperProvider.WebScraperSource;
 class WebScraperTest {
 
 	@ParameterizedTest
-	@WebScraperSource({ ImmoweltWebScraper.class, EbayWebScraper.class })
+	@WebScraperSource({ ImmoscoutWebScraper.class, ImmoweltWebScraper.class, EbayWebScraper.class })
 	void test(WebScraperFactory<Collection<Link>> factory, WebDriver driver) {
 		var term = System.getProperty("term");
 		var scraper = factory.createNew(term);
