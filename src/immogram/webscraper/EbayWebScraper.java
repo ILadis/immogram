@@ -1,6 +1,7 @@
 package immogram.webscraper;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -74,6 +75,7 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 			var link = Link.newBuilder()
 					.title(title.text())
 					.href(href)
+					.seen(Instant.now())
 					.build();
 
 			links.add(link);

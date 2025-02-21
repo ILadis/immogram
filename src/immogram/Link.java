@@ -1,16 +1,23 @@
 package immogram;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.Objects;
 
 public class Link {
 
 	private Link() { }
 
-	private String title;
+	private String title = new String();
+	private Instant seen = Instant.EPOCH;
 	private URI href;
 
 	public String title() {
 		return title;
+	}
+
+	public Instant seen() {
+		return seen;
 	}
 
 	public URI href() {
@@ -24,9 +31,10 @@ public class Link {
 
 	@Override
 	public boolean equals(Object object) {
-		if (object instanceof Link) {
-			var other = (Link) object;
-			return other.href.equals(href);
+		if (object instanceof Link other) {
+			return Objects.equals(title, other.title)
+					&& Objects.equals(seen, other.seen)
+					&& Objects.equals(href, other.href);
 		}
 		return super.equals(object);
 	}
@@ -42,6 +50,11 @@ public class Link {
 
 		public Builder title(String value) {
 			title = value;
+			return this;
+		}
+
+		public Builder seen(Instant value) {
+			seen = value;
 			return this;
 		}
 

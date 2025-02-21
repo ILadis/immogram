@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.Locale;
 
 import immogram.bot.ImmogramBot;
+import immogram.feed.FeedServer;
+import immogram.feed.http.JsonFeedHttpServer;
 import immogram.repository.LinkRepository;
 import immogram.repository.ScreenshotRepository;
 import immogram.task.LinkToText;
@@ -37,6 +39,7 @@ public class Bootstrap {
 	private Connection sqlConnection;
 	private LinkRepository linkRepository;
 	private ScreenshotRepository screenshotRepository;
+	private FeedServer feedServer;
 	private TaskManager taskManager;
 	private WebDriver webDriver;
 	private TelegramApi telegramApi;
@@ -55,6 +58,13 @@ public class Bootstrap {
 			screenshotRepository = ScreenshotRepository.openNew(sqlConnection);
 		}
 		return screenshotRepository;
+	}
+
+	public FeedServer feedServer() {
+		if (feedServer == null) {
+			feedServer = new JsonFeedHttpServer(taskManager(), linkRepository(), screenshotRepository());
+		}
+		return feedServer;
 	}
 
 	public TaskManager taskManager() {
@@ -80,20 +90,30 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {
-		return term -> scraperTask(new ImmoweltWebScraper(term));
+		return term -> scraperTask(new ImmoweltWebScraper(term)).pipe(_ -> null);
+	}
+
+	public TaskFactory<String, Void, Void> immoweltBotScraperTask() {
+		return term -> scraperTask(new ImmoweltWebScraper(term))
+				.pipe(new LinkToText())
+				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
 	}
 
 	public TaskFactory<String, Void, Void> ebayScraperTask() {
-		return term -> scraperTask(new EbayWebScraper(term));
+		return term -> scraperTask(new EbayWebScraper(term)).pipe(_ -> null);
 	}
 
-	private Task<Void, Void> scraperTask(WebScraper<Collection<Link>> scraper) {
+	public TaskFactory<String, Void, Void> ebayBotScraperTask() {
+		return term -> scraperTask(new EbayWebScraper(term))
+				.pipe(new LinkToText())
+				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
+	}
+
+	private Task<Void, Collection<Link>> scraperTask(WebScraper<Collection<Link>> scraper) {
 		return new Retry<>(5, Duration.ofMillis(100),
 				      new ScrapeWeb<>(webDriver(), scraper))
 				.pipe(new SaveAndFilter<>(linkRepository(), Link::href))
-				.pipe(new SaveScreenshot<>(screenshotRepository(), webDriver(), ScreenshotWebScraper::new, Link::href))
-				.pipe(new LinkToText())
-				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
+				.pipe(new SaveScreenshot<>(screenshotRepository(), webDriver(), ScreenshotWebScraper::new, Link::href));
 	}
 
 	private HttpClient httpClient() {
@@ -123,8 +143,12 @@ public class Bootstrap {
 		}
 
 		public Builder webDriverEndpoint(String uri) throws Throwable {
+			return webDriverEndpoint(uri, true);
+		}
+
+		public Builder webDriverEndpoint(String uri, boolean headless) throws Throwable {
 			var root = URI.create(uri);
-			webDriver = new HttpWebDriver(httpClient(), root);
+			webDriver = new HttpWebDriver(httpClient(), root, headless);
 			return this;
 		}
 

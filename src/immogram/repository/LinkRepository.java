@@ -2,7 +2,10 @@ package immogram.repository;
 
 import java.net.URI;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Iterator;
 import java.util.Optional;
 
 import immogram.Exceptions;
@@ -28,8 +31,9 @@ public class LinkRepository implements Repository<URI, Link> {
 			var stmt = conn.createStatement();
 			stmt.addBatch(""
 					+ "CREATE TABLE IF NOT EXISTS links ("
-					+ "  href VARCHAR(1024),"
-					+ "  title VARCHAR(512)"
+					+ "  title VARCHAR(2048),"
+					+ "  seen TIMESTAMP WITH TIME ZONE,"
+					+ "  href VARCHAR(1024)"
 					+ ")");
 			stmt.addBatch(""
 					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_links "
@@ -41,10 +45,35 @@ public class LinkRepository implements Repository<URI, Link> {
 	}
 
 	@Override
+	public Iterator<Link> findAll() {
+		try {
+			var stmt = conn.prepareStatement(""
+					+ "SELECT title, seen, href "
+					+ "FROM links ORDER BY seen DESC");
+
+			return new ResultSetIterator<Link>(stmt.executeQuery()) {
+				protected @Override Link map(ResultSet result) throws SQLException {
+					var title = result.getString(1);
+					var seen = result.getTimestamp(2).toInstant();
+					var href = URI.create(result.getString(3));
+
+					return Link.newBuilder()
+							.title(title)
+							.seen(seen)
+							.href(href)
+							.build();
+				}
+			};
+		} catch (SQLException e) {
+			return Exceptions.throwUnchecked(e);
+		}
+	}
+
+	@Override
 	public Optional<Link> findBy(URI href) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT title "
+					+ "SELECT title, seen "
 					+ "FROM links WHERE href = ?");
 
 			stmt.setString(1, href.toString());
@@ -54,8 +83,12 @@ public class LinkRepository implements Repository<URI, Link> {
 				return Optional.empty();
 			}
 
+			var title = result.getString(1);
+			var seen = result.getTimestamp(2).toInstant();
+
 			var link = Link.newBuilder()
-					.title(result.getString(1))
+					.title(title)
+					.seen(seen)
 					.href(href)
 					.build();
 
@@ -69,14 +102,15 @@ public class LinkRepository implements Repository<URI, Link> {
 	public void save(Link link) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "MERGE INTO links ("
-					+ "  title, href"
-					+ ") KEY (href) VALUES ("
-					+ "  ?, ?"
+					+ "INSERT INTO links ("
+					+ "  title, seen, href"
+					+ ") VALUES ("
+					+ "  ?, ?, ?"
 					+ ")");
 
 			stmt.setString(1, link.title());
-			stmt.setString(2, link.href().toString());
+			stmt.setTimestamp(2, Timestamp.from(link.seen()));
+			stmt.setString(3, link.href().toString());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {

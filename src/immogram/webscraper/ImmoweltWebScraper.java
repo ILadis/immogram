@@ -2,6 +2,7 @@ package immogram.webscraper;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -83,6 +84,7 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 			var link = Link.newBuilder()
 					.title(title)
 					.href(href)
+					.seen(Instant.now())
 					.build();
 
 			links.add(link);

@@ -3,7 +3,9 @@ package immogram.repository;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.Optional;
 
 import immogram.Exceptions;
@@ -29,12 +31,12 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 			var stmt = conn.createStatement();
 			stmt.addBatch(""
 					+ "CREATE TABLE IF NOT EXISTS screenshots ("
-					+ "  href VARCHAR(1024),"
-					+ "  bitmap BINARY(2097152)"
+					+ "  bitmap BINARY(2097152),"
+					+ "  url VARCHAR(1024)"
 					+ ")");
 			stmt.addBatch(""
-					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_screenshots "
-					+ "ON screenshots (href)");
+					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_screenshot_urls "
+					+ "ON screenshots (url)");
 			stmt.executeBatch();
 		} catch (SQLException e) {
 			Exceptions.throwUnchecked(e);
@@ -42,13 +44,36 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 	}
 
 	@Override
-	public Optional<Screenshot> findBy(URI href) {
+	public Iterator<Screenshot> findAll() {
+		try {
+			var stmt = conn.prepareStatement(""
+					+ "SELECT url, bitmap "
+					+ "FROM screenshots");
+
+			return new ResultSetIterator<Screenshot>(stmt.executeQuery()) {
+				protected @Override Screenshot map(ResultSet result) throws SQLException {
+					var url = URI.create(result.getString(1));
+					var bitmap = ByteBuffer.wrap(result.getBytes(2));
+
+					return Screenshot.newBuilder()
+							.url(url)
+							.bitmap(bitmap)
+							.build();
+				}
+			};
+		} catch (SQLException e) {
+			return Exceptions.throwUnchecked(e);
+		}
+	}
+
+	@Override
+	public Optional<Screenshot> findBy(URI url) {
 		try {
 			var stmt = conn.prepareStatement(""
 					+ "SELECT bitmap "
-					+ "FROM screenshots WHERE href = ?");
+					+ "FROM screenshots WHERE url = ?");
 
-			stmt.setString(1, href.toString());
+			stmt.setString(1, url.toString());
 
 			var result = stmt.executeQuery();
 			if (!result.next()) {
@@ -58,7 +83,7 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 			var bitmap = ByteBuffer.wrap(result.getBytes(1));
 
 			var screenshot = Screenshot.newBuilder()
-					.href(href)
+					.url(url)
 					.bitmap(bitmap)
 					.build();
 
@@ -73,12 +98,12 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 		try {
 			var stmt = conn.prepareStatement(""
 					+ "MERGE INTO screenshots ("
-					+ "  href, bitmap"
-					+ ") KEY (href) VALUES ("
+					+ "  url, bitmap"
+					+ ") KEY (url) VALUES ("
 					+ "  ?, ?"
 					+ ")");
 
-			stmt.setString(1, screenshot.href().toString());
+			stmt.setString(1, screenshot.url().toString());
 			stmt.setBytes(2, screenshot.bitmap().array());
 
 			stmt.executeUpdate();
@@ -92,9 +117,9 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 		try {
 			var stmt = conn.prepareStatement(""
 					+ "DELETE FROM screenshots WHERE "
-					+ "href = ?");
+					+ "url = ?");
 
-			stmt.setString(1, screenshot.href().toString());
+			stmt.setString(1, screenshot.url().toString());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {

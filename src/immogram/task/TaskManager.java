@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -42,6 +43,10 @@ public class TaskManager {
 		this.tasks.remove(task);
 	}
 
+	public Optional<ManagedTask> taskByAlias(String alias) {
+		return tasks.stream().filter(task -> Objects.equals(task.alias, alias)).findFirst();
+	}
+
 	public List<ManagedTask> listTasks() {
 		return Collections.unmodifiableList(tasks);
 	}
@@ -55,8 +60,7 @@ public class TaskManager {
 
 	private static TimerTask createTimerTask(Runnable runnable) {
 		return new TimerTask() {
-			@Override
-			public void run() {
+			public @Override void run() {
 				runnable.run();
 			}
 		};

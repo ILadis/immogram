@@ -31,8 +31,8 @@ def bootstrap = builder()
 
 def manager = bootstrap.taskManager()
 
-def immowelt = manager.register("Immowelt", bootstrap.immoweltScraperTask())
-def ebay = manager.register("Ebay", bootstrap.ebayScraperTask())
+def immowelt = manager.register("Immowelt", bootstrap.immoweltBotScraperTask())
+def ebay = manager.register("Ebay", bootstrap.ebayBotScraperTask())
 
 immowelt.create("91413 Neustadt an der Aisch")
 immowelt.create("97346 Iphofen")

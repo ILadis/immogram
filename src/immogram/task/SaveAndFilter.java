@@ -25,10 +25,9 @@ public class SaveAndFilter<I, E> implements Task<Collection<E>, Collection<E>> {
 			var existing = repo.findBy(id);
 
 			if (existing.isEmpty()) {
+				repo.save(entity);
 				output.add(entity);
 			}
-
-			repo.save(entity);
 		}
 
 		return output;

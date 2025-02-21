@@ -9,22 +9,22 @@ import immogram.webdriver.WebDriver;
 
 public class ScreenshotWebScraper implements WebScraper<Screenshot> {
 
-	private final URI target;
+	private final URI url;
 
-	public ScreenshotWebScraper(URI target) {
-		this.target = target;
+	public ScreenshotWebScraper(URI url) {
+		this.url = url;
 	}
 
 	@Override
 	public Screenshot execute(WebDriver driver) {
 		try (var session = Session.createNew(driver)) {
-			session.navigateTo(target);
+			session.navigateTo(url);
 
 			var body = session.findElement(By.cssSelector("body"));
 			var screenshot = body.takeScreenshot();
 
 			return Screenshot.newBuilder()
-					.href(target)
+					.url(url)
 					.bitmap(screenshot)
 					.build();
 		}
