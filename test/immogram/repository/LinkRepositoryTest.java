@@ -37,26 +37,24 @@ public class LinkRepositoryTest {
 	void findBy_shouldReturnEmptyOptional_whenLinkWithGivenHrefDoesNotExist() {
 		// arrange
 		var link = Link.newBuilder()
-				.title("localhost - 8080")
+				.title("test link")
 				.href(URI.create("http://localhost:8080/test"))
 				.build();
 
 		sut.save(link);
 
 		// act
-		var result1 = sut.findBy(URI.create("ftp://localhost:2323"));
-		var result2 = sut.findBy(URI.create("http://localhost:8080/test"));
+		var result = sut.findBy(URI.create("ftp://localhost:2323"));
 
 		// assert
-		assertTrue(result1.isEmpty());
-		assertTrue(result2.isPresent());
+		assertTrue(result.isEmpty());
 	}
 
 	@Test
-	void findBy_shouldMapPublishedTimestampCorrectly() {
+	void findBy_shouldReturnLink_whenLinkWithGivenHrefExists() {
 		// arrange
 		var link = Link.newBuilder()
-				.title("localhost - 8080")
+				.title("test link")
 				.seen(Instant.parse("2007-12-03T10:15:30Z"))
 				.href(URI.create("http://localhost:8080/test"))
 				.build();
@@ -67,7 +65,9 @@ public class LinkRepositoryTest {
 		var result = sut.findBy(URI.create("http://localhost:8080/test")).get();
 
 		// assert
+		assertEquals("test link", result.title());
 		assertEquals("2007-12-03T10:15:30Z", result.seen().toString());
+		assertEquals("http://localhost:8080/test", result.href().toString());
 	}
 
 	@Test
@@ -90,7 +90,7 @@ public class LinkRepositoryTest {
 
 		for (String href : hrefs) {
 			var link = Link.newBuilder()
-					.title(href)
+					.title("test link")
 					.href(URI.create(href))
 					.build();
 
@@ -98,14 +98,51 @@ public class LinkRepositoryTest {
 		}
 
 		// act
-		var result1 = sut.findAll();
-		var result2 = hrefs.iterator();
+		var result = sut.findAll();
 
 		// assert
-		while (result1.hasNext()) {
-			assertEquals(result2.next(), result1.next().href().toString());
+		var iterator = hrefs.iterator();
+		while (result.hasNext()) {
+			assertEquals(iterator.next(), result.next().href().toString());
 		}
-		assertFalse(result1.hasNext());
-		assertFalse(result2.hasNext());
+
+		assertFalse(result.hasNext());
+		assertFalse(iterator.hasNext());
+	}
+
+	@Test
+	void findLastSeen_shouldReturnEmptyOption_whenNoLinksExist() {
+		// act
+		var result = sut.findLastSeen();
+
+		// assert
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	void findLastSeen_shouldReturnLastSeenLink_whenMultipleLinksExist() {
+		// arrange
+		var seens = List.of(
+				"2007-12-03T10:15:30Z",
+				"2007-12-02T09:10:45Z",
+				"2007-12-04T11:20:50Z",
+				"2007-12-01T08:05:10Z");
+
+		for (String seen : seens) {
+			var link = Link.newBuilder()
+					.title(seen)
+					.href(URI.create("http://localhost:8080/link?seen=" + seen))
+					.seen(Instant.parse(seen))
+					.build();
+
+			sut.save(link);
+		}
+
+		// act
+		var result = sut.findLastSeen();
+
+		// assert
+		assertTrue(result.isPresent());
+		assertEquals("2007-12-04T11:20:50Z", result.get().seen().toString());
 	}
 }

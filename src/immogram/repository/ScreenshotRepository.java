@@ -52,13 +52,7 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 
 			return new ResultSetIterator<Screenshot>(stmt.executeQuery()) {
 				protected @Override Screenshot map(ResultSet result) throws SQLException {
-					var url = URI.create(result.getString(1));
-					var bitmap = ByteBuffer.wrap(result.getBytes(2));
-
-					return Screenshot.newBuilder()
-							.url(url)
-							.bitmap(bitmap)
-							.build();
+					return ScreenshotRepository.this.map(result);
 				}
 			};
 		} catch (SQLException e) {
@@ -70,7 +64,7 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 	public Optional<Screenshot> findBy(URI url) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT bitmap "
+					+ "SELECT url, bitmap "
 					+ "FROM screenshots WHERE url = ?");
 
 			stmt.setString(1, url.toString());
@@ -80,17 +74,21 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 				return Optional.empty();
 			}
 
-			var bitmap = ByteBuffer.wrap(result.getBytes(1));
-
-			var screenshot = Screenshot.newBuilder()
-					.url(url)
-					.bitmap(bitmap)
-					.build();
-
+			var screenshot = map(result);
 			return Optional.of(screenshot);
 		} catch (SQLException e) {
 			return Exceptions.throwUnchecked(e);
 		}
+	}
+
+	private Screenshot map(ResultSet result) throws SQLException {
+		var url = URI.create(result.getString(1));
+		var bitmap = ByteBuffer.wrap(result.getBytes(2));
+
+		return Screenshot.newBuilder()
+				.url(url)
+				.bitmap(bitmap)
+				.build();
 	}
 
 	@Override
