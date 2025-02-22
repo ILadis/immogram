@@ -119,10 +119,14 @@ public class TaskManager {
 		}
 
 		public void schedule(Duration period) {
+			schedule(Duration.ZERO, period);
+		}
+
+		public void schedule(Duration delay, Duration period) {
 			if (task == null) {
 				task = createTimerTask(() -> execute(null));
 				runPeriod = period;
-				timer.scheduleAtFixedRate(task, 0, period.toMillis());
+				timer.scheduleAtFixedRate(task, delay.toMillis(), period.toMillis());
 			}
 		}
 

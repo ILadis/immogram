@@ -1,6 +1,8 @@
 package immogram.feed.http;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
@@ -15,7 +17,8 @@ import immogram.task.TaskManager.ManagedTask;
 
 class JsonBuilders {
 
-	private static final Base64.Encoder urlEncoder = Base64.getUrlEncoder().withoutPadding();
+	static final Base64.Encoder urlEncoder = Base64.getUrlEncoder().withoutPadding();
+	static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'").withZone(ZoneId.of("GMT"));
 
 	static JsonObject forLinks(String title, URI endpoint, Iterator<Link> links) {
 		var json = Json.createArrayBuilder();

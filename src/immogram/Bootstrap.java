@@ -1,5 +1,7 @@
 package immogram;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.sql.Connection;
@@ -40,9 +42,9 @@ public class Bootstrap {
 	private Connection sqlConnection;
 	private LinkRepository linkRepository;
 	private ScreenshotRepository screenshotRepository;
-	private FeedServer feedServer;
 	private TaskManager taskManager;
 	private WebDriver webDriver;
+	private FeedServer feedServer;
 	private TelegramApi telegramApi;
 	private ImmogramBot immogramBot;
 	private HttpClient httpClient;
@@ -61,13 +63,6 @@ public class Bootstrap {
 		return screenshotRepository;
 	}
 
-	public FeedServer feedServer() {
-		if (feedServer == null) {
-			feedServer = new JsonFeedHttpServer(taskManager(), linkRepository(), screenshotRepository());
-		}
-		return feedServer;
-	}
-
 	public TaskManager taskManager() {
 		if (taskManager == null) {
 			taskManager = new TaskManager();
@@ -77,6 +72,13 @@ public class Bootstrap {
 
 	public WebDriver webDriver() {
 		return webDriver;
+	}
+
+	public FeedServer feedServer() {
+		if (feedServer == null) {
+			feedServer = new JsonFeedHttpServer(taskManager(), linkRepository(), screenshotRepository());
+		}
+		return feedServer;
 	}
 
 	public TelegramApi telegramApi() {
@@ -95,9 +97,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> immoscoutBotScraperTask() {
-		return term -> scraperTask(new ImmoscoutWebScraper(term))
-				.pipe(new LinkToText())
-				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
+		return term -> sendMessages(scraperTask(new ImmoscoutWebScraper(term)));
 	}
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {
@@ -105,9 +105,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> immoweltBotScraperTask() {
-		return term -> scraperTask(new ImmoweltWebScraper(term))
-				.pipe(new LinkToText())
-				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
+		return term -> sendMessages(scraperTask(new ImmoweltWebScraper(term)));
 	}
 
 	public TaskFactory<String, Void, Void> ebayScraperTask() {
@@ -115,9 +113,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> ebayBotScraperTask() {
-		return term -> scraperTask(new EbayWebScraper(term))
-				.pipe(new LinkToText())
-				.pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
+		return term -> sendMessages(scraperTask(new EbayWebScraper(term)));
 	}
 
 	private Task<Void, Collection<Link>> scraperTask(WebScraper<Collection<Link>> scraper) {
@@ -125,6 +121,10 @@ public class Bootstrap {
 				      new ScrapeWeb<>(webDriver(), scraper))
 				.pipe(new SaveAndFilter<>(linkRepository(), Link::href))
 				.pipe(new SaveScreenshot<>(screenshotRepository(), webDriver(), ScreenshotWebScraper::new, Link::href));
+	}
+
+	private Task<Void, Void> sendMessages(Task<Void, Collection<Link>> task) {
+		return task.pipe(new LinkToText()).pipe(new SendTextMessages(telegramApi(), immogramBot().obeyingChat()));
 	}
 
 	private HttpClient httpClient() {
@@ -160,6 +160,13 @@ public class Bootstrap {
 		public Builder webDriverEndpoint(String uri, boolean headless) throws Throwable {
 			var root = URI.create(uri);
 			webDriver = new HttpWebDriver(httpClient(), root, headless);
+			return this;
+		}
+
+		public Builder feedServer(String host, int port, String endpoint) throws Throwable {
+			var address = new InetSocketAddress(InetAddress.getByName(host), port);
+			feedServer = new JsonFeedHttpServer(taskManager(), linkRepository(), screenshotRepository());
+			feedServer.start(address, URI.create(endpoint));
 			return this;
 		}
 
