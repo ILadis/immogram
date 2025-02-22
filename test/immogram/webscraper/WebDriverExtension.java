@@ -3,6 +3,7 @@ package immogram.webscraper;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.Optional;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -33,7 +34,7 @@ class WebDriverExtension extends TypeBasedParameterResolver<WebDriver> implement
 	@Override
 	public WebDriver resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
 			throws ParameterResolutionException {
-		return new HttpWebDriver(client, uri, false);
+		return new HttpWebDriver(client, uri, Optional.empty(), false);
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Optional;
 
 import immogram.bot.ImmogramBot;
 import immogram.feed.FeedServer;
@@ -154,19 +155,19 @@ public class Bootstrap {
 		}
 
 		public Builder webDriverEndpoint(String uri) throws Throwable {
-			return webDriverEndpoint(uri, true);
+			return webDriverEndpoint(uri, null, true);
 		}
 
-		public Builder webDriverEndpoint(String uri, boolean headless) throws Throwable {
+		public Builder webDriverEndpoint(String uri, String profile, boolean headless) throws Throwable {
 			var root = URI.create(uri);
-			webDriver = new HttpWebDriver(httpClient(), root, headless);
+			webDriver = new HttpWebDriver(httpClient(), root, Optional.ofNullable(profile), headless);
 			return this;
 		}
 
-		public Builder feedServer(String host, int port, String endpoint) throws Throwable {
+		public Builder feedServer(String host, int port, String uri) throws Throwable {
 			var address = new InetSocketAddress(InetAddress.getByName(host), port);
 			feedServer = new JsonFeedHttpServer(taskManager(), linkRepository(), screenshotRepository());
-			feedServer.start(address, URI.create(endpoint));
+			feedServer.start(address, URI.create(uri));
 			return this;
 		}
 

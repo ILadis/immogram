@@ -31,7 +31,7 @@ public class JsonFeedHttpServer implements FeedServer {
 	}
 
 	@Override
-	public void start(InetSocketAddress address, URI endpoint) throws IOException {
+	public void start(InetSocketAddress address, URI root) throws IOException {
 		if (server != null) {
 			throw new IOException("Server is already running");
 		}
@@ -39,17 +39,17 @@ public class JsonFeedHttpServer implements FeedServer {
 		server = HttpServer.create(address, 5);
 		var authenticator = new AdminAuthenticator(() -> password);
 
-		var feed = server.createContext(endpoint.resolve("./feed").getPath());
-		feed.setHandler(new JsonFeedHandler(endpoint, links));
+		var feed = server.createContext(root.resolve("./feed").getPath());
+		feed.setHandler(new JsonFeedHandler(root, links));
 
-		var screenshot = server.createContext(endpoint.resolve("./screenshots").getPath());
+		var screenshot = server.createContext(root.resolve("./screenshots").getPath());
 		screenshot.setHandler(new ScreenshotsHandler(screenshots));
 
-		var listTasks = server.createContext(endpoint.resolve("./tasks").getPath());
-		listTasks.setHandler(new ListTasksHandler(endpoint, tasks));
+		var listTasks = server.createContext(root.resolve("./tasks").getPath());
+		listTasks.setHandler(new ListTasksHandler(root, tasks));
 		listTasks.setAuthenticator(authenticator);
 
-		var hooks = server.createContext(endpoint.resolve("./hooks").getPath());
+		var hooks = server.createContext(root.resolve("./hooks").getPath());
 		hooks.setHandler(new TaskHooksHandler(tasks));
 		listTasks.setAuthenticator(authenticator);
 

@@ -6,5 +6,5 @@ import java.net.URI;
 
 public interface FeedServer {
 	void setAdminPassword(String password);
-	void start(InetSocketAddress address, URI endpoint) throws IOException;
+	void start(InetSocketAddress address, URI root) throws IOException;
 }

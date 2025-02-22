@@ -12,6 +12,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import javax.json.JsonStructure;
@@ -37,15 +38,20 @@ public class HttpWebDriver implements WebDriver {
 	private final List<String> capabilities = new LinkedList<>();
 
 	public HttpWebDriver(HttpClient client, URI root) {
-		this(client, root, true);
+		this(client, root, Optional.empty(), true);
 	}
 
-	public HttpWebDriver(HttpClient client, URI root, boolean headless) {
+	public HttpWebDriver(HttpClient client, URI root, Optional<String> profile, boolean headless) {
 		this.client = client;
 		this.root = root;
 
 		if (headless) {
 			capabilities.add("-headless");
+		}
+
+		if (profile.isPresent()) {
+			capabilities.add("--profile");
+			capabilities.add(profile.get());
 		}
 	}
 

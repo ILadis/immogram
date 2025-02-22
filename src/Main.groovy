@@ -25,23 +25,20 @@ def builder = {
 def bootstrap = builder()
 		.messagesLocale(Locale.GERMAN)
 		.jdbcUrl(props['JDBC_URL'])
-		.webDriverEndpoint('http://localhost:4444')
-		.telegramApiTokenAndEndpoint(props['BOT_TOKEN'], 'https://api.telegram.org')
+		.webDriverEndpoint('http://localhost:4444', props['GECKO_PROFILE'], true)
+		.feedServer('0.0.0.0', 8080, 'http://localhost:8080/')
 		.build()
 
 def manager = bootstrap.taskManager()
+def period = Duration.ofHours(3)
 
-def immowelt = manager.register("Immowelt", bootstrap.immoweltBotScraperTask())
-def ebay = manager.register("Ebay", bootstrap.ebayBotScraperTask())
+def immoscout = manager.register('Immoscout', bootstrap.immoscoutScraperTask())
+def immowelt = manager.register('Immowelt', bootstrap.immoweltScraperTask())
+def ebay = manager.register('Ebay', bootstrap.ebayScraperTask())
 
-immowelt.create("91413 Neustadt an der Aisch")
-immowelt.create("97346 Iphofen")
-ebay.create("91413 Neustadt an der Aisch")
-ebay.create("97346 Iphofen")
+immoscout.create('90537 Feucht').schedule(period)
+immowelt.create('90537 Feucht').schedule(period)
+ebay.create('90537 Feucht').schedule(period)
 
-def bot = bootstrap.immogramBot()
-def timeout = Duration.ofSeconds(30)
-
-while (true) {
-	bot.pollUpdates(timeout)
-}
+def server = bootstrap.feedServer()
+server.setAdminPassword(props['ADMIN_PASSWD'])
