@@ -94,7 +94,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> immoscoutScraperTask() {
-		return term -> scraperTask(new ImmoscoutWebScraper(term)).pipe(_ -> null);
+		return term -> scraperTask(new ImmoscoutWebScraper(term)).pipe(task -> null);
 	}
 
 	public TaskFactory<String, Void, Void> immoscoutBotScraperTask() {
@@ -102,7 +102,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> immoweltScraperTask() {
-		return term -> scraperTask(new ImmoweltWebScraper(term)).pipe(_ -> null);
+		return term -> scraperTask(new ImmoweltWebScraper(term)).pipe(task -> null);
 	}
 
 	public TaskFactory<String, Void, Void> immoweltBotScraperTask() {
@@ -110,7 +110,7 @@ public class Bootstrap {
 	}
 
 	public TaskFactory<String, Void, Void> ebayScraperTask() {
-		return term -> scraperTask(new EbayWebScraper(term)).pipe(_ -> null);
+		return term -> scraperTask(new EbayWebScraper(term)).pipe(task -> null);
 	}
 
 	public TaskFactory<String, Void, Void> ebayBotScraperTask() {

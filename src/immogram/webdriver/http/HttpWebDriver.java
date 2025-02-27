@@ -245,7 +245,7 @@ public class HttpWebDriver implements WebDriver {
 	}
 
 	private <T> T execute(HttpRequest.Builder request) {
-		return execute(request, (_) -> null);
+		return execute(request, stream -> null);
 	}
 
 	private <T> T execute(HttpRequest.Builder request, Function<InputStream, T> reader) {

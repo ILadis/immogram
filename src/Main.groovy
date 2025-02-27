@@ -30,15 +30,19 @@ def bootstrap = builder()
 		.build()
 
 def manager = bootstrap.taskManager()
-def period = Duration.ofHours(3)
 
 def immoscout = manager.register('Immoscout', bootstrap.immoscoutScraperTask())
 def immowelt = manager.register('Immowelt', bootstrap.immoweltScraperTask())
 def ebay = manager.register('Ebay', bootstrap.ebayScraperTask())
 
-immoscout.create('90537 Feucht').schedule(period)
-immowelt.create('90537 Feucht').schedule(period)
-ebay.create('90537 Feucht').schedule(period)
+def period = Duration.ofHours(3)
+def terms = props['SEARCH_TERMS'].tokenize(':')
+
+terms.each { term ->
+	immoscout.create(term).schedule(period)
+	immowelt.create(term).schedule(period)
+	ebay.create(term).schedule(period)
+}
 
 def server = bootstrap.feedServer()
 server.setAdminPassword(props['ADMIN_PASSWD'])
