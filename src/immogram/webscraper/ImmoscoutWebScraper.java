@@ -31,7 +31,9 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 			submitSearch(session, city);
 
 			var links = new LinkedHashSet<Link>();
-			addAllApartmentsOnPage(session, links);
+			do {
+				addAllApartmentsOnPage(session, links);
+			} while (gotoNextPage(session));
 
 			return links;
 		}
@@ -73,7 +75,9 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 		var elements = session.findElements(By.cssSelector(".result-list-entry__brand-title-container[data-exp-referrer=RESULT_LIST_LISTING]"));
 
 		for (var element : elements) {
-			var title = element.text();
+			var title = element.text()
+					.replaceFirst("^NEU", "")
+					.replaceAll("[\\t\\r\\n]", "");
 
 			var path = URI.create(element.attr("href")).getPath();
 			var href = index.resolve(path);
@@ -85,6 +89,17 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 					.build();
 
 			links.add(link);
+		}
+	}
+
+
+	private boolean gotoNextPage(Session session) {
+		try {
+			var next = session.findElement(By.cssSelector("[aria-label^=Nächste]:not([disabled])"));
+			next.click();
+			return true;
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }

@@ -22,7 +22,8 @@ class WebScraperTest {
 		var links = scraper.execute(driver);
 
 		for (var link : links) {
-			System.out.println(link.href());
+			var output = String.format("%s (%s)", link.title(), link.href());
+			System.out.println(output);
 		}
 	}
 
