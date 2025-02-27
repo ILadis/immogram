@@ -70,6 +70,7 @@ class JsonBuilders {
 				.add("last_run_timestamp", lastRunTimestamp.orElse("never"))
 				.add("last_run_exception", lastRunException.orElse("none"))
 				.add("execute_hook", endpoint.resolve("./hooks/" + alias + "/execute").toString())
+				.add("schedule_hook", endpoint.resolve("./hooks/" + alias + "/schedule?hours=3").toString())
 				.add("cancel_hook", endpoint.resolve("./hooks/" + alias + "/cancel").toString())
 				.build();
 	}

@@ -2,7 +2,10 @@ package immogram.feed.http;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
 import java.util.Base64;
+import java.util.regex.Pattern;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -19,10 +22,10 @@ class TaskHooksHandler implements HttpHandler {
 
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
-		var path = exchange.getRequestURI().getPath();
+		var uri = exchange.getRequestURI();
 
 		try {
-			var file = new File(path);
+			var file = new File(uri.getPath());
 			var action = file.getName();
 
 			var decoder = Base64.getUrlDecoder();
@@ -35,6 +38,7 @@ class TaskHooksHandler implements HttpHandler {
 			} else {
 				switch (action) {
 					case "execute"  -> task.get().execute(null);
+					case "schedule" -> task.get().schedule(durationFromQuery(uri));
 					case "cancel"   -> task.get().cancel();
 				}
 
@@ -44,5 +48,19 @@ class TaskHooksHandler implements HttpHandler {
 			e.printStackTrace();
 			exchange.sendResponseHeaders(500, -1);
 		}
+	}
+
+	private Duration durationFromQuery(URI uri) {
+		var query = uri.getQuery();
+
+		var pattern = Pattern.compile("hours=(\\d+)");
+		var matcher = pattern.matcher(query);
+
+		if (matcher.find()) {
+			var hours = Integer.parseInt(matcher.group(1));
+			return Duration.ofHours(hours);
+		}
+
+		throw new IllegalArgumentException();
 	}
 }
