@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import immogram.Link;
+import immogram.SearchQuery;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
@@ -15,20 +16,33 @@ import immogram.webdriver.WebDriver;
 public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
-	private final String city;
+	private final SearchQuery query;
 
-	public ImmoscoutWebScraper(String city) {
-		this.city = city;
+	public ImmoscoutWebScraper(SearchQuery query) {
+		this.query = query;
 		this.index = URI.create("https://www.immobilienscout24.de");
+	}
+
+	private static String searchPageFor(SearchQuery query) {
+		return switch(query.marketing()) {
+			case RENT -> switch(query.realEstate()) {
+				case APARTMENT -> "/wohnen/mietwohnungen.html";
+				case HOUSE     -> "/wohnen/haus-mieten.html";
+			};
+			case BUY -> switch(query.realEstate()) {
+				case APARTMENT -> "/wohnen/eigentumswohnung.html";
+				case HOUSE     -> "/wohnen/haus-kaufen.html";
+			};
+		};
 	}
 
 	@Override
 	public Collection<Link> execute(WebDriver driver) {
 		try (var session = Session.createNew(driver)) {
-			session.navigateTo(index.resolve("/wohnen/mietwohnungen.html"));
+			session.navigateTo(index.resolve(searchPageFor(query)));
 
 			closeOverlays(session);
-			submitSearch(session, city);
+			submitSearch(session);
 
 			var links = new LinkedHashSet<Link>();
 			do {
@@ -54,9 +68,9 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 		}
 	}
 
-	private void submitSearch(Session session, String city) {
+	private void submitSearch(Session session) {
 		var input = session.findElement(By.cssSelector(".oss-location"));
-		input.sendKeys(city);
+		input.sendKeys(query.city());
 
 		var option = session.waitForElement(By.cssSelector(".ui-autocomplete .ui-menu-item"), Duration.ofSeconds(8));
 		option.click();

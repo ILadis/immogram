@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import immogram.Link;
+import immogram.SearchQuery;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
@@ -15,10 +16,10 @@ import immogram.webdriver.WebDriver;
 public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
-	private final String city;
+	private final SearchQuery query;
 
-	public ImmoweltWebScraper(String city) {
-		this.city = city;
+	public ImmoweltWebScraper(SearchQuery query) {
+		this.query = query;
 		this.index = URI.create("https://www.immowelt.de");
 	}
 
@@ -28,7 +29,7 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 			session.navigateTo(index);
 
 			closeOverlays(session);
-			submitSearch(session, city);
+			submitSearch(session);
 
 			var links = new LinkedHashSet<Link>();
 			do {
@@ -54,26 +55,29 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 		}
 	}
 
-	private void submitSearch(Session session, String city) {
+	private void submitSearch(Session session) {
 		try {
 			var button = session.findElement(By.cssSelector("[data-testid=wlhp-hero] button"));
 			button.click();
 		} catch (Exception e) {
-			// no need to reset search
+			// no need to reset search if button is not present
 		}
 
-		var tab = session.findElement(By.cssSelector("[data-key=RENT]"));
+		var tab = switch (query.marketing()) {
+			case BUY  -> session.findElement(By.cssSelector("[data-key=BUY]"));
+			case RENT -> session.findElement(By.cssSelector("[data-key=RENT]"));
+		};
 		tab.click();
 
-		var input = session.findElement(By.cssSelector("[data-testid=refiner-form-test-id] input"));
-		input.sendKeys(city);
+		var input = session.findElement(By.cssSelector("[data-testid^=refiner-form] input"));
+		input.sendKeys(query.city());
 
 		var option = session.waitForElement(By.cssSelector("[aria-label=Empfehlungen] li"), Duration.ofSeconds(8));
 		option.click();
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
-		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core] a"));
+		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core] a[data-testid^=card]"));
 
 		for (var element : elements) {
 			var title = element.attr("title");

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,7 +13,7 @@ import java.util.TimerTask;
 
 public class TaskManager {
 
-	private final List<ManagedTaskFactory> factories;
+	private final List<ManagedTaskFactory<?>> factories;
 	private final List<ManagedTask> tasks;
 	private final Timer timer;
 
@@ -22,13 +23,26 @@ public class TaskManager {
 		this.timer = createTimer();
 	}
 
-	public ManagedTaskFactory register(String alias, TaskFactory<String, Void, Void> factory) {
-		var managed = new ManagedTaskFactory(alias, factory);
+	public <P> ManagedTaskFactory<P> register(String alias, TaskFactory<P, Void, Void> factory) {
+		var managed = new ManagedTaskFactory<>(alias, factory);
 		factories.add(managed);
 		return managed;
 	}
 
-	public List<ManagedTaskFactory> listFactories() {
+	@SuppressWarnings("unchecked")
+	public <P> List<ManagedTaskFactory<P>> listFactories(Class<P> param) {
+		List<ManagedTaskFactory<P>> factories = new LinkedList<>();
+
+		for (ManagedTaskFactory<?> managed : this.factories) {
+			try {
+				Class<?> factory = managed.delegate.getClass();
+				factory.getDeclaredMethod("create", param);
+				factories.add((ManagedTaskFactory<P>) managed);
+			} catch (NoSuchMethodException | SecurityException e) {
+				continue; // factory param type does not match
+			}
+		}
+
 		return Collections.unmodifiableList(factories);
 	}
 
@@ -66,12 +80,12 @@ public class TaskManager {
 		};
 	}
 
-	public class ManagedTaskFactory implements TaskFactory<String, Void, Void> {
+	public class ManagedTaskFactory<P> extends TaskFactory<P, Void, Void> {
 
 		private final String alias;
-		private final TaskFactory<String, Void, Void> delegate;
+		private final TaskFactory<P, Void, Void> delegate;
 
-		private ManagedTaskFactory(String alias, TaskFactory<String, Void, Void> delegate) {
+		private ManagedTaskFactory(String alias, TaskFactory<P, Void, Void> delegate) {
 			this.alias = alias;
 			this.delegate = delegate;
 		}
@@ -81,7 +95,7 @@ public class TaskManager {
 		}
 
 		@Override
-		public ManagedTask create(String term) {
+		public ManagedTask create(P term) {
 			var task = delegate.create(term);
 			return register(alias + " - " + term, task);
 		}

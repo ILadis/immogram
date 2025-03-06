@@ -2,6 +2,7 @@ package immogram.bot;
 
 import java.util.function.Consumer;
 
+import immogram.SearchQuery;
 import immogram.task.TaskManager;
 import immogram.task.TaskManager.ManagedTaskFactory;
 import immogram.telegram.CallbackQuery;
@@ -30,13 +31,13 @@ class CreateTaskCommand extends Command {
 
 	private InlineKeyboard newListingKeyboard(TelegramApi telegram) {
 		var keyboard = InlineKeyboard.newBuilder();
-		for (var factory : manager.listFactories()) {
+		for (var factory : manager.listFactories(SearchQuery.class)) {
 			keyboard.addRow().addButton(factory.alias(), requestTerm(telegram, factory));
 		}
 		return keyboard.build();
 	}
 
-	private Consumer<CallbackQuery> requestTerm(TelegramApi telegram, ManagedTaskFactory factory) {
+	private Consumer<CallbackQuery> requestTerm(TelegramApi telegram, ManagedTaskFactory<SearchQuery> factory) {
 		return (callback) -> {
 			var message = callback.message().get();
 			var text = messages.factoryRequestTerm();
@@ -45,10 +46,11 @@ class CreateTaskCommand extends Command {
 		};
 	}
 
-	private Command.Runner createNewTask(ManagedTaskFactory factory) {
+	private Command.Runner createNewTask(ManagedTaskFactory<SearchQuery> factory) {
 		return (telegram, message) -> {
-			var term = message.text().get();
-			var task = factory.create(term);
+			var city = message.text().get();
+			var query = SearchQuery.forRentingAppartment(city);
+			var task = factory.create(query);
 			var text = messages.factoryTaskCreated(task);
 			telegram.sendTextMessage(message.response(text));
 		};

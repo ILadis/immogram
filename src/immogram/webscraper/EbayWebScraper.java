@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import immogram.Link;
+import immogram.SearchQuery;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
@@ -15,20 +16,33 @@ import immogram.webscraper.utils.Retry;
 public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 	private final URI index;
-	private final String city;
+	private final SearchQuery query;
 
-	public EbayWebScraper(String city) {
-		this.city = city;
+	public EbayWebScraper(SearchQuery query) {
+		this.query = query;
 		this.index = URI.create("https://www.kleinanzeigen.de");
+	}
+
+	private static String searchPageFor(SearchQuery query) {
+		return switch(query.marketing()) {
+			case RENT -> switch(query.realEstate()) {
+				case APARTMENT -> "/s-wohnung-mieten/c203";
+				case HOUSE     -> "/s-haus-mieten/c205";
+			};
+			case BUY -> switch(query.realEstate()) {
+				case APARTMENT -> "/s-wohnung-kaufen/c196";
+				case HOUSE     -> "/s-haus-kaufen/c208";
+			};
+		};
 	}
 
 	@Override
 	public Collection<Link> execute(WebDriver driver) {
 		try (var session = Session.createNew(driver)) {
-			session.navigateTo(index.resolve("/s-wohnung-mieten/c203"));
+			session.navigateTo(index.resolve(searchPageFor(query)));
 
 			closeOverlays(session);
-			submitSearch(session, city);
+			submitSearch(session);
 
 			var links = new LinkedHashSet<Link>();
 			do {
@@ -55,9 +69,9 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 		});
 	}
 
-	private void submitSearch(Session session, String city) {
+	private void submitSearch(Session session) {
 		var input = session.findElement(By.cssSelector("#site-search-area"));
-		input.sendKeys(city);
+		input.sendKeys(query.city());
 
 		var submit = session.findElement(By.cssSelector("#site-search-submit"));
 		submit.click();

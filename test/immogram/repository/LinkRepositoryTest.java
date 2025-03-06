@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import immogram.Link;
 
-public class LinkRepositoryTest {
+class LinkRepositoryTest {
 
 	private LinkRepository sut;
 	private Connection conn;

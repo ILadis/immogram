@@ -1,5 +1,5 @@
 package immogram.task;
 
-public interface TaskFactory<P, I, O> {
-	Task<I, O> create(P param);
+public abstract class TaskFactory<P, I, O> {
+	public abstract Task<I, O> create(P param);
 }

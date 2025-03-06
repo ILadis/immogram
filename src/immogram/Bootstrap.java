@@ -93,28 +93,60 @@ public class Bootstrap {
 		return immogramBot;
 	}
 
-	public TaskFactory<String, Void, Void> immoscoutScraperTask() {
-		return term -> scraperTask(new ImmoscoutWebScraper(term)).pipe(task -> null);
+	public SearchQuery searchQueryForRentingAppartment(String city) {
+		return SearchQuery.forRentingAppartment(city);
 	}
 
-	public TaskFactory<String, Void, Void> immoscoutBotScraperTask() {
-		return term -> sendMessages(scraperTask(new ImmoscoutWebScraper(term)));
+	public SearchQuery searchQueryForBuyingAppartment(String city) {
+		return SearchQuery.forBuyingAppartment(city);
 	}
 
-	public TaskFactory<String, Void, Void> immoweltScraperTask() {
-		return term -> scraperTask(new ImmoweltWebScraper(term)).pipe(task -> null);
+	public TaskFactory<SearchQuery, Void, Void> immoscoutScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return scraperTask(new ImmoscoutWebScraper(query)).pipe(task -> null);
+			}
+		};
 	}
 
-	public TaskFactory<String, Void, Void> immoweltBotScraperTask() {
-		return term -> sendMessages(scraperTask(new ImmoweltWebScraper(term)));
+	public TaskFactory<SearchQuery, Void, Void> immoscoutBotScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return sendMessages(scraperTask(new ImmoscoutWebScraper(query)));
+			}
+		};
 	}
 
-	public TaskFactory<String, Void, Void> ebayScraperTask() {
-		return term -> scraperTask(new EbayWebScraper(term)).pipe(task -> null);
+	public TaskFactory<SearchQuery, Void, Void> immoweltScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return scraperTask(new ImmoweltWebScraper(query)).pipe(task -> null);
+			}
+		};
 	}
 
-	public TaskFactory<String, Void, Void> ebayBotScraperTask() {
-		return term -> sendMessages(scraperTask(new EbayWebScraper(term)));
+	public TaskFactory<SearchQuery, Void, Void> immoweltBotScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return sendMessages(scraperTask(new ImmoweltWebScraper(query)));
+			}
+		};
+	}
+
+	public TaskFactory<SearchQuery, Void, Void> ebayScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return scraperTask(new EbayWebScraper(query)).pipe(task -> null);
+			}
+		};
+	}
+
+	public TaskFactory<SearchQuery, Void, Void> ebayBotScraperTask() {
+		return new TaskFactory<SearchQuery, Void, Void>() {
+			public @Override Task<Void, Void> create(SearchQuery query) {
+				return sendMessages(scraperTask(new EbayWebScraper(query)));
+			}
+		};
 	}
 
 	private Task<Void, Collection<Link>> scraperTask(WebScraper<Collection<Link>> scraper) {
