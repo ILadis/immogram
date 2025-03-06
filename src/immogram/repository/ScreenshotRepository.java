@@ -37,6 +37,7 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 			stmt.addBatch(""
 					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_screenshot_urls "
 					+ "ON screenshots (url)");
+			stmt.addBatch("ALTER TABLE screenshots ALTER COLUMN bitmap BINARY(6291456)");
 			stmt.executeBatch();
 		} catch (SQLException e) {
 			Exceptions.throwUnchecked(e);
