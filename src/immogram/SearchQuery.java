@@ -9,6 +9,11 @@ public record SearchQuery(String city, Marketing marketing, RealEstate realEstat
 		APARTMENT, HOUSE;
 	}
 
+	@Override
+	public final String toString() {
+		return String.format("%s (%s, %s)", city, marketing.name(), realEstate.name());
+	}
+
 	public static SearchQuery forRentingAppartment(String city) {
 		return new SearchQuery(city, Marketing.RENT, RealEstate.APARTMENT);
 	}
