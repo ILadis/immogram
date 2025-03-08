@@ -1,5 +1,11 @@
 package immogram;
 
+import static java.util.function.Predicate.not;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public record SearchQuery(String city, Marketing marketing, RealEstate realEstate) {
 	public static enum Marketing {
 		RENT, BUY;
@@ -7,6 +13,14 @@ public record SearchQuery(String city, Marketing marketing, RealEstate realEstat
 
 	public static enum RealEstate {
 		APARTMENT, HOUSE;
+	}
+
+	public Set<String> terms() {
+		var terms = Arrays.asList(city.split("\\s+"));
+
+		return terms.stream()
+				.filter(not(String::isBlank))
+				.collect(Collectors.toSet());
 	}
 
 	@Override

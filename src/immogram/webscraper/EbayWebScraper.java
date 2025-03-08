@@ -1,11 +1,13 @@
 package immogram.webscraper;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import immogram.Exceptions;
 import immogram.Link;
 import immogram.SearchQuery;
 import immogram.webdriver.By;
@@ -44,9 +46,13 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 			closeOverlays(session);
 			submitSearch(session);
 
+			Retry.suppress(3, () -> waitForResultsPage(session))
+					.ifPresent(Exceptions::throwUnchecked);
+
 			var links = new LinkedHashSet<Link>();
 			do {
-				addAllApartmentsOnPage(session, links);
+				Retry.suppress(3, () -> addAllApartmentsOnPage(session, links))
+						.ifPresent(Exceptions::throwUnchecked);
 			} while (gotoNextPage(session));
 
 			return links;
@@ -54,14 +60,14 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 	}
 
 	private void closeOverlays(Session session) {
-		Retry.suppress(8, () -> {
+		Retry.suppress(16, () -> {
 			var banner = session.findElement(By.cssSelector("#consentBanner"));
 
 			var deny = banner.findElement(By.cssSelector("[data-testid=gdpr-banner-decline]"));
 			deny.click();
 		});
 
-		Retry.suppress(3, () -> {
+		Retry.suppress(8, () -> {
 			var overlay = session.findElement(By.cssSelector(".login-overlay:not(.is-hidden)"));
 
 			var close = overlay.findElement(By.cssSelector(".overlay-close"));
@@ -75,6 +81,17 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 		var submit = session.findElement(By.cssSelector("#site-search-submit"));
 		submit.click();
+	}
+
+	private void waitForResultsPage(Session session) {
+		var breadcrump = session.waitForElement(By.cssSelector(".breadcrump-summary"), Duration.ofSeconds(8));
+		var text = breadcrump.text();
+
+		for (var term : query.terms()) {
+			if (!text.contains(term)) {
+				throw new IllegalStateException("Page title '" + text + "' does not contain search term '" + term + "'");
+			}
+		}
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {

@@ -17,13 +17,13 @@ import java.util.function.Function;
 
 import javax.json.JsonStructure;
 
-import immogram.Exceptions;
 import immogram.webdriver.By;
 import immogram.webdriver.Element;
 import immogram.webdriver.Session;
 import immogram.webdriver.Session.Id;
 import immogram.webdriver.ShadowRoot;
 import immogram.webdriver.WebDriver;
+import immogram.webdriver.WebDriverException;
 
 /* For available web driver endpoints see:
  *   https://w3c.github.io/webdriver/#endpoints
@@ -254,7 +254,7 @@ public class HttpWebDriver implements WebDriver {
 		try {
 			response = client.send(request.build(), BodyHandlers.ofInputStream());
 		} catch (IOException | InterruptedException e) {
-			return Exceptions.throwUnchecked(e);
+			throw new WebDriverException("IO error during web driver interaction", e);
 		}
 
 		if (response.statusCode() < 400) {
@@ -262,6 +262,6 @@ public class HttpWebDriver implements WebDriver {
 		}
 
 		var message = JsonReaders.forErrorMessage(response.body());
-		return Exceptions.throwUnchecked(new Exception(message));
+		throw new WebDriverException(message);
 	}
 }

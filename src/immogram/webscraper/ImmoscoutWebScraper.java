@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import immogram.Exceptions;
 import immogram.Link;
 import immogram.SearchQuery;
 import immogram.webdriver.By;
 import immogram.webdriver.Session;
 import immogram.webdriver.WebDriver;
+import immogram.webscraper.utils.Retry;
 
 public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 
@@ -44,9 +46,13 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 			closeOverlays(session);
 			submitSearch(session);
 
+			Retry.suppress(3, () -> waitForResultsPage(session))
+					.ifPresent(Exceptions::throwUnchecked);
+
 			var links = new LinkedHashSet<Link>();
 			do {
-				addAllApartmentsOnPage(session, links);
+				Retry.suppress(3, () -> addAllApartmentsOnPage(session, links))
+						.ifPresent(Exceptions::throwUnchecked);
 			} while (gotoNextPage(session));
 
 			return links;
@@ -58,10 +64,10 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 			var dialog = session.findElement(By.cssSelector("#usercentrics-root"));
 			var root = dialog.shadowRoot();
 
-			var customize = root.waitForElement(By.cssSelector("[data-testid^=uc-customize]"), Duration.ofSeconds(8));
+			var customize = root.waitForElement(By.cssSelector("[data-testid^=uc-customize]"), Duration.ofSeconds(16));
 			customize.click();
 
-			var deny = root.waitForElement(By.cssSelector("[data-testid^=uc-deny]"), Duration.ofSeconds(3));
+			var deny = root.waitForElement(By.cssSelector("[data-testid^=uc-deny]"), Duration.ofSeconds(8));
 			deny.click();
 		} catch (Exception e) {
 			// nothing to reject
@@ -83,6 +89,17 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 
 		var button = session.findElement(By.cssSelector(".oss-submit-search"));
 		button.click();
+	}
+
+	private void waitForResultsPage(Session session) {
+		var title = session.waitForElement(By.cssSelector("[data-testid=ResultListHeadline]"), Duration.ofSeconds(8));
+		var text = title.text();
+
+		for (var term : query.terms()) {
+			if (!text.contains(term)) {
+				throw new IllegalStateException("Page title '" + text + "' does not contain search term '" + term + "'");
+			}
+		}
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
