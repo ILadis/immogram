@@ -10,6 +10,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -249,10 +250,11 @@ public class HttpWebDriver implements WebDriver {
 	}
 
 	private <T> T execute(HttpRequest.Builder request, Function<InputStream, T> reader) {
+		Duration timeout = Duration.ofSeconds(30);
 		HttpResponse<InputStream> response;
 
 		try {
-			response = client.send(request.build(), BodyHandlers.ofInputStream());
+			response = client.send(request.timeout(timeout).build(), BodyHandlers.ofInputStream());
 		} catch (IOException | InterruptedException e) {
 			throw new WebDriverException("IO error during web driver interaction", e);
 		}
