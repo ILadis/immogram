@@ -31,13 +31,12 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 			var stmt = conn.createStatement();
 			stmt.addBatch(""
 					+ "CREATE TABLE IF NOT EXISTS screenshots ("
-					+ "  bitmap BINARY(2097152),"
+					+ "  bitmap BINARY(6291456),"
 					+ "  url VARCHAR(1024)"
 					+ ")");
 			stmt.addBatch(""
 					+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_screenshot_urls "
 					+ "ON screenshots (url)");
-			stmt.addBatch("ALTER TABLE screenshots ALTER COLUMN bitmap BINARY(6291456)");
 			stmt.executeBatch();
 		} catch (SQLException e) {
 			Exceptions.throwUnchecked(e);

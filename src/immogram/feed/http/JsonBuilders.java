@@ -1,4 +1,5 @@
 package immogram.feed.http;
+
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
@@ -6,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;

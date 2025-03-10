@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.Optional;
-
 import immogram.Exceptions;
 import immogram.Link;
 
@@ -32,6 +31,7 @@ public class LinkRepository implements Repository<URI, Link> {
 			stmt.addBatch(""
 					+ "CREATE TABLE IF NOT EXISTS links ("
 					+ "  title VARCHAR(2048),"
+					+ "  tags VARCHAR(256) ARRAY[10],"
 					+ "  seen TIMESTAMP WITH TIME ZONE,"
 					+ "  href VARCHAR(1024)"
 					+ ")");
@@ -48,7 +48,7 @@ public class LinkRepository implements Repository<URI, Link> {
 	public Iterator<Link> findAll() {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT title, seen, href "
+					+ "SELECT title, tags, seen, href "
 					+ "FROM links ORDER BY seen DESC");
 
 			return new ResultSetIterator<Link>(stmt.executeQuery()) {
@@ -65,7 +65,7 @@ public class LinkRepository implements Repository<URI, Link> {
 	public Optional<Link> findBy(URI href) {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT title, seen, href "
+					+ "SELECT title, tags, seen, href "
 					+ "FROM links WHERE href = ?");
 
 			stmt.setString(1, href.toString());
@@ -85,7 +85,7 @@ public class LinkRepository implements Repository<URI, Link> {
 	public Optional<Link> findLastSeen() {
 		try {
 			var stmt = conn.prepareStatement(""
-					+ "SELECT title, seen, href "
+					+ "SELECT title, tags, seen, href "
 					+ "FROM links ORDER BY seen DESC "
 					+ "LIMIT 1");
 
@@ -101,16 +101,42 @@ public class LinkRepository implements Repository<URI, Link> {
 		}
 	}
 
+	public Iterator<Link> findByTag(String tag) {
+		try {
+			var stmt = conn.prepareStatement(""
+					+ "SELECT title, tags, seen, href "
+					+ "FROM links WHERE ARRAY_CONTAINS(tags, ?) "
+					+ "ORDER BY seen DESC");
+
+			var tags = conn.createArrayOf("VARCHAR", new Object[] { tag });
+			stmt.setArray(1, tags);
+
+			return new ResultSetIterator<Link>(stmt.executeQuery()) {
+				protected @Override Link map(ResultSet result) throws SQLException {
+					return LinkRepository.this.map(result);
+				}
+			};
+		} catch (SQLException e) {
+			return Exceptions.throwUnchecked(e);
+		}
+	}
+
 	private Link map(ResultSet result) throws SQLException {
 		var title = result.getString(1);
-		var seen = result.getTimestamp(2).toInstant();
-		var href = URI.create(result.getString(3));
+		var tags = (Object[]) result.getArray(2).getArray();
+		var seen = result.getTimestamp(3).toInstant();
+		var href = URI.create(result.getString(4));
 
-		return Link.newBuilder()
+		var link = Link.newBuilder()
 				.title(title)
 				.seen(seen)
-				.href(href)
-				.build();
+				.href(href);
+
+		for (Object tag : tags) {
+			link.tag(tag.toString());
+		}
+
+		return link.build();
 	}
 
 	@Override
@@ -118,14 +144,17 @@ public class LinkRepository implements Repository<URI, Link> {
 		try {
 			var stmt = conn.prepareStatement(""
 					+ "INSERT INTO links ("
-					+ "  title, seen, href"
+					+ "  title, tags, seen, href"
 					+ ") VALUES ("
-					+ "  ?, ?, ?"
+					+ "  ?, ?, ?, ?"
 					+ ")");
 
 			stmt.setString(1, link.title());
-			stmt.setTimestamp(2, Timestamp.from(link.seen()));
-			stmt.setString(3, link.href().toString());
+			stmt.setTimestamp(3, Timestamp.from(link.seen()));
+			stmt.setString(4, link.href().toString());
+
+			var tags = conn.createArrayOf("VARCHAR", link.tags().toArray());
+			stmt.setArray(2, tags);
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {

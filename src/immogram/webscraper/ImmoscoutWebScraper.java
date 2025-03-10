@@ -115,6 +115,9 @@ public class ImmoscoutWebScraper implements WebScraper<Collection<Link>> {
 
 			var link = Link.newBuilder()
 					.title(title)
+					.tag(query.city())
+					.tag(query.marketing().name())
+					.tag(query.realEstate().name())
 					.href(href)
 					.seen(Instant.now())
 					.build();

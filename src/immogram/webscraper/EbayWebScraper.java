@@ -105,6 +105,9 @@ public class EbayWebScraper implements WebScraper<Collection<Link>> {
 
 			var link = Link.newBuilder()
 					.title(title.text())
+					.tag(query.city())
+					.tag(query.marketing().name())
+					.tag(query.realEstate().name())
 					.href(href)
 					.seen(Instant.now())
 					.build();

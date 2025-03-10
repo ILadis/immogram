@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -51,7 +52,7 @@ class TaskHooksHandler implements HttpHandler {
 	}
 
 	private Duration durationFromQuery(URI uri) {
-		var query = uri.getQuery();
+		var query = Objects.requireNonNullElse(uri.getQuery(), "");
 
 		var pattern = Pattern.compile("hours=(\\d+)");
 		var matcher = pattern.matcher(query);
