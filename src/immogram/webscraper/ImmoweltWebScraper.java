@@ -94,7 +94,7 @@ public class ImmoweltWebScraper implements WebScraper<Collection<Link>> {
 	}
 
 	private void addAllApartmentsOnPage(Session session, Set<Link> links) {
-		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core] a[data-testid^=card]"));
+		var elements = session.findElements(By.cssSelector("[data-testid^=serp-core-classified] a[data-testid^=card]"));
 
 		for (var element : elements) {
 			var title = element.attr("title");
