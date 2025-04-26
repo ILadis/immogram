@@ -40,7 +40,7 @@ class JsonFeedHandler implements HttpHandler {
 			var links = tags.map(repository::findByTag).orElseGet(repository::findAll);
 			var json = JsonBuilders.forLinks(title.toString(), endpoint, links);
 
-			headers.add("Content-Type", "application/json");
+			headers.add("Content-Type", "application/feed+json");
 			if (latest.isPresent()) {
 				headers.add("Last-Modified", JsonBuilders.dateFormatter.format(latest.get()));
 			}

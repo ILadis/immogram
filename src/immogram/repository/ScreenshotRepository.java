@@ -112,12 +112,16 @@ public class ScreenshotRepository implements Repository<URI, Screenshot> {
 
 	@Override
 	public void delete(Screenshot screenshot) {
+		deleteBy(screenshot.url());
+	}
+
+	public void deleteBy(URI url) {
 		try {
 			var stmt = conn.prepareStatement(""
 					+ "DELETE FROM screenshots WHERE "
 					+ "url = ?");
 
-			stmt.setString(1, screenshot.url().toString());
+			stmt.setString(1, url.toString());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {

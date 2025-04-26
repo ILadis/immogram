@@ -42,6 +42,10 @@ public class JsonFeedHttpServer implements FeedServer {
 		var feed = server.createContext(root.resolve("./feed").getPath());
 		feed.setHandler(new JsonFeedHandler(root, links));
 
+		var itemHooks = server.createContext(root.resolve("./items").getPath());
+		itemHooks.setHandler(new JsonFeedItemHooksHandler(links, screenshots));
+		itemHooks.setAuthenticator(authenticator);
+
 		var screenshot = server.createContext(root.resolve("./screenshots").getPath());
 		screenshot.setHandler(new ScreenshotsHandler(screenshots));
 
@@ -49,9 +53,9 @@ public class JsonFeedHttpServer implements FeedServer {
 		listTasks.setHandler(new ListTasksHandler(root, tasks));
 		listTasks.setAuthenticator(authenticator);
 
-		var hooks = server.createContext(root.resolve("./hooks").getPath());
-		hooks.setHandler(new TaskHooksHandler(tasks));
-		listTasks.setAuthenticator(authenticator);
+		var taskHooks = server.createContext(root.resolve("./hooks").getPath());
+		taskHooks.setHandler(new TaskHooksHandler(tasks));
+		taskHooks.setAuthenticator(authenticator);
 
 		server.createContext("/", exchange -> exchange.sendResponseHeaders(404, -1));
 		server.start();

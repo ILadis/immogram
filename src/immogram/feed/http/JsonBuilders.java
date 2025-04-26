@@ -4,6 +4,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import immogram.Exceptions;
@@ -36,23 +38,45 @@ class JsonBuilders {
 				.build();
 	}
 
-	static JsonObject forLink(URI endpoint, Link link) {
+	static JsonString forLinkId(Link link) {
 		var id = Integer.toHexString(link.href().hashCode());
-		var encodedUrl = urlEncoder.encodeToString(link.href().toString().getBytes(StandardCharsets.UTF_8));
+		return Json.createValue(id);
+	}
+
+	static JsonObject forLink(URI endpoint, Link link) {
+		var id = forLinkId(link);
+		var href = urlEncoder.encodeToString(link.href().toString().getBytes(StandardCharsets.UTF_8));
 
 		return Json.createObjectBuilder()
 				.add("id", id)
 				.add("title", link.title())
 				.add("date_published", link.seen().toString())
-				.add("image", endpoint.resolve("./screenshots/" + encodedUrl).toString())
+				.add("image", endpoint.resolve("./screenshots/" + href).toString())
 				.add("url", link.href().toString())
+				.add("_links", forResources(
+						"delete", endpoint.resolve("./items/" + id.getString() + "/delete"),
+						"screenshot", endpoint.resolve("./screenshots/" + href)))
 				.build();
+	}
+
+	static JsonObject forResources(Object ...resources) {
+		var json = Json.createObjectBuilder();
+
+		var iterator = Arrays.asList(resources).iterator();
+		while (iterator.hasNext()) {
+			var resource = iterator.next().toString();
+			var href = iterator.next().toString();
+
+			json.add(resource, Json.createObjectBuilder().add("href", href));
+		}
+
+		return json.build();
 	}
 
 	static JsonArray forTasks(URI endpoint, List<ManagedTask> tasks) {
 		var json = Json.createArrayBuilder();
 
-		for (ManagedTask task : tasks) {
+		for (var task : tasks) {
 			json.add(forTask(endpoint, task));
 		}
 
@@ -71,9 +95,10 @@ class JsonBuilders {
 				.add("run_period", period.orElse("never"))
 				.add("last_run_timestamp", lastRunTimestamp.orElse("never"))
 				.add("last_run_exception", lastRunException.orElse("none"))
-				.add("execute_hook", endpoint.resolve("./hooks/" + alias + "/execute").toString())
-				.add("schedule_hook", endpoint.resolve("./hooks/" + alias + "/schedule?hours=3").toString())
-				.add("cancel_hook", endpoint.resolve("./hooks/" + alias + "/cancel").toString())
+				.add("_links", forResources(
+						"execute", endpoint.resolve("./hooks/" + alias + "/execute"),
+						"schedule", endpoint.resolve("./hooks/" + alias + "/schedule?hours=3"),
+						"cancel", endpoint.resolve("./hooks/" + alias + "/cancel")))
 				.build();
 	}
 
